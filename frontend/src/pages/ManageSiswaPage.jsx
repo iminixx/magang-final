@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, Filter } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, Edit2, Filter, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
@@ -32,6 +32,8 @@ const ManageSiswaPage = () => {
   const [siswaList, setSiswaList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
   const itemsPerPage = 10;
 
   // Fetch once
@@ -53,6 +55,28 @@ const ManageSiswaPage = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedJurusan, kelasFilter]);
+
+  const fileInputRef = useRef(null);
+
+  const handleCsvUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      await fetch("http://localhost:5000/api/siswa/import", {
+        method: "POST",
+        body: formData,
+      });
+      await fetchAll();
+      alert("Berhasil mengimpor data siswa!");
+    } catch (err) {
+      console.error("Upload CSV gagal:", err);
+      alert("Gagal mengimpor file CSV");
+    }
+  };
 
   // Client-side filtering
   const filteredList = siswaList.filter((s) => {
@@ -80,6 +104,41 @@ const ManageSiswaPage = () => {
   };
   const hasFilter = !!searchTerm || !!selectedJurusan || !!kelasFilter;
 
+  const handleBatchDelete = async () => {
+    if (!window.confirm(`Yakin hapus ${selectedIds.length} siswa?`)) return;
+    try {
+      await fetch("http://localhost:5000/api/siswa/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      setSelectedIds([]);
+      await fetchAll();
+      alert("Siswa berhasil dihapus massal");
+    } catch (err) {
+      console.error("Gagal hapus massal:", err);
+    }
+  };
+
+  const handleBatchEdit = async () => {
+    const newKelas = prompt("Masukkan kelas baru untuk semua siswa terpilih:");
+    if (!newKelas) return;
+    try {
+      await fetch("http://localhost:5000/api/siswa/batch-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: selectedIds,
+          update: { kelas: newKelas },
+        }),
+      });
+      setSelectedIds([]);
+      await fetchAll();
+      alert("Siswa berhasil diupdate massal");
+    } catch (err) {
+      console.error("Gagal update massal:", err);
+    }
+  };
   // Form handlers
   const handleSubmit = async () => {
     const errs = {};
@@ -168,6 +227,22 @@ const ManageSiswaPage = () => {
                     </span>
                   )}
                 </button>
+
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Upload className="w-4 h-4" /> Import CSV
+                </button>
+
+                <input
+                  type="file"
+                  accept=".csv"
+                  ref={fileInputRef}
+                  onChange={handleCsvUpload}
+                  className="hidden"
+                />
+
                 <button
                   onClick={() => setShowForm(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -215,6 +290,27 @@ const ManageSiswaPage = () => {
               </div>
             )}
           </div>
+          {selectedIds.length > 0 && (
+            <div className="flex justify-between items-center mb-4 px-6">
+              <span className="text-sm text-gray-600">
+                {selectedIds.length} siswa dipilih
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBatchEdit}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Edit Massal
+                </button>
+                <button
+                  onClick={handleBatchDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Hapus Massal
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Form Modal */}
           <Modal
@@ -295,6 +391,25 @@ const ManageSiswaPage = () => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
+                        {/* ← CHECKBOX “Select All” */}
+                        <th className="px-6 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectAllAcrossPages}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                // pilih semua item yang sudah difilter, di semua halaman
+                                const allIds = filteredList.map((s) => s._id);
+                                setSelectedIds(allIds);
+                                setSelectAllAcrossPages(true);
+                              } else {
+                                // unselect all
+                                setSelectedIds([]);
+                                setSelectAllAcrossPages(false);
+                              }
+                            }}
+                          />
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                           Nama
                         </th>
@@ -315,6 +430,23 @@ const ManageSiswaPage = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {paginated.map((s) => (
                         <tr key={s._id} className="hover:bg-gray-50">
+                          {/* ← CHECKBOX per baris */}
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(s._id)}
+                              onChange={(e) => {
+                                setSelectAllAcrossPages(false); // batalkan select-all seluruh halaman
+                                if (e.target.checked) {
+                                  setSelectedIds((prev) => [...prev, s._id]);
+                                } else {
+                                  setSelectedIds((prev) =>
+                                    prev.filter((id) => id !== s._id)
+                                  );
+                                }
+                              }}
+                            />
+                          </td>
                           <td className="px-6 py-4 text-sm text-gray-900">
                             {s.nama}
                           </td>
@@ -346,6 +478,7 @@ const ManageSiswaPage = () => {
                     </tbody>
                   </table>
                 </div>
+
                 {totalPages > 1 && (
                   <div className="mt-4 flex justify-center">
                     <Pagination

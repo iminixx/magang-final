@@ -1,5 +1,6 @@
+// src/pages/PeminjamanSiswaPage.jsx
 import React, { useState, useEffect } from "react";
-import PeminjamanForm from "../components/PeminjamanForm";
+import PeminjamanForm from "../components/PeminjamanForm"; // untuk siswa
 import SearchInput from "../components/SearchInput";
 import JurusanFilter from "../components/JurusanFilter";
 import Pagination from "../components/Pagination";
@@ -8,20 +9,17 @@ import { Filter, Info as InfoIcon } from "lucide-react";
 
 function DescriptionModal({ isOpen, onClose, item }) {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-md">
         <h3 className="text-xl font-semibold mb-4">
-          Deskripsi&nbsp;
-          <span className="text-blue-600">{item?.nama}</span>
+          Deskripsi&nbsp;<span className="text-blue-600">{item?.nama}</span>
         </h3>
         <p className="text-gray-700 whitespace-pre-line">
           {item?.deskripsi?.trim()
             ? item.deskripsi
             : "Belum ada deskripsi untuk barang ini."}
         </p>
-
         <div className="mt-6 text-right">
           <button
             onClick={onClose}
@@ -38,20 +36,17 @@ function DescriptionModal({ isOpen, onClose, item }) {
 const API_LOAN = "http://localhost:5000/api/peminjaman";
 const API_BARANG = "http://localhost:5000/api/barang";
 
-export default function PeminjamanManagement() {
+export default function PeminjamanSiswaPage() {
   const [barangList, setBarangList] = useState([]);
   const [searchBarang, setSearchBarang] = useState("");
   const [jurusanBarang, setJurusanBarang] = useState("");
   const [pageTidakHabis, setPageTidakHabis] = useState(1);
   const [pageHabis, setPageHabis] = useState(1);
   const itemsPerPage = 10;
-
   const [showFilters, setShowFilters] = useState(false);
   const hasActiveFilters = Boolean(searchBarang || jurusanBarang);
-
   const [showForm, setShowForm] = useState(false);
   const [selectedBarang, setSelectedBarang] = useState(null);
-
   const [showDescModal, setShowDescModal] = useState(false);
   const [selectedDescBarang, setSelectedDescBarang] = useState(null);
 
@@ -71,12 +66,13 @@ export default function PeminjamanManagement() {
   }
 
   const availBarang = barangList
-    .filter((b) => {
-      if (b.tipe === "habis_pakai") return b.stok > 0;
-      const totalUnits = Array.isArray(b.units) ? b.units.length : 0;
-      const dipinjam = b.stok_dipinjam || 0;
-      return totalUnits - dipinjam > 0;
-    })
+    .filter((b) =>
+      b.tipe === "habis_pakai"
+        ? b.stok > 0
+        : (Array.isArray(b.units) ? b.units.length : 0) -
+            (b.stok_dipinjam || 0) >
+          0
+    )
     .filter(
       (b) =>
         !searchBarang ||
@@ -127,7 +123,6 @@ export default function PeminjamanManagement() {
         unitKodes: form.unitKodes,
         keterangan: form.keterangan,
       };
-
       const resLoan = await fetch(API_LOAN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,7 +133,6 @@ export default function PeminjamanManagement() {
         throw new Error(err.message || "Gagal membuat peminjaman");
       }
       await resLoan.json();
-
       setShowForm(false);
       setSelectedBarang(null);
       await fetchBarangList();
@@ -159,7 +153,7 @@ export default function PeminjamanManagement() {
     <div className="flex">
       <div className="flex-1 flex flex-col">
         <main className="p-8 flex-1 overflow-auto">
-          {/* ---------- Breadcrumb ---------- */}
+          {/* Breadcrumb */}
           <div className="mb-8">
             <nav className="text-sm text-gray-600 mb-2">
               <ul className="inline-flex space-x-2">
@@ -169,19 +163,23 @@ export default function PeminjamanManagement() {
                   </a>
                   <span className="mx-1">/</span>
                 </li>
-                <li className="text-gray-800 font-semibold">Peminjaman</li>
+                <li className="text-gray-800 font-semibold">
+                  Peminjaman Siswa
+                </li>
               </ul>
             </nav>
-            <h1 className="text-3xl font-bold text-gray-800">Peminjaman</h1>
+            <h1 className="text-3xl font-bold text-gray-800">
+              Peminjaman Siswa
+            </h1>
           </div>
 
-          {/* ---------- DATA BARANG ---------- */}
+          {/* DATA BARANG */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Data Barang
             </h2>
 
-            {/* ===== Top Row: Search + Tombol Filter ===== */}
+            {/* Top Row: Search + Filter */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-4">
               <SearchInput
                 value={searchBarang}
@@ -202,8 +200,7 @@ export default function PeminjamanManagement() {
                     : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
                 }`}
               >
-                <Filter className="w-4 h-4" />
-                Filter
+                <Filter className="w-4 h-4" /> Filter
                 {hasActiveFilters && (
                   <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-1 ml-1">
                     {(searchBarang ? 1 : 0) + (jurusanBarang ? 1 : 0)}
@@ -226,10 +223,9 @@ export default function PeminjamanManagement() {
                       setPageHabis(1);
                     }}
                     placeholder="Semua jurusan"
-                    showClearButton={true}
+                    showClearButton
                   />
                 </div>
-
                 {hasActiveFilters && (
                   <div className="flex items-end">
                     <button
@@ -279,7 +275,7 @@ export default function PeminjamanManagement() {
               </div>
             )}
 
-            {/* ===== TABEL 1: Tidak Habis Pakai ===== */}
+            {/* TABEL 1: Tidak Habis Pakai */}
             <div className="mb-8">
               {pagedTidakHabisPakai.length === 0 ? (
                 <p className="text-center p-6 text-gray-500">
@@ -307,7 +303,6 @@ export default function PeminjamanManagement() {
                         ))}
                       </tr>
                     </thead>
-
                     <tbody className="bg-white divide-y divide-gray-200">
                       {pagedTidakHabisPakai.map((b) => {
                         const totalUnits = Array.isArray(b.units)
@@ -315,10 +310,8 @@ export default function PeminjamanManagement() {
                           : 0;
                         const dipinjamCount = b.stok_dipinjam || 0;
                         const tersediaCount = totalUnits - dipinjamCount;
-
                         return (
                           <tr key={b._id} className="hover:bg-gray-50">
-                            {/* ★ UBAH – Nama dengan ikon Info di samping */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               <div className="flex items-center justify-center space-x-2">
                                 <span>{b.nama || "-"}</span>
@@ -331,25 +324,20 @@ export default function PeminjamanManagement() {
                                 </button>
                               </div>
                             </td>
-                            {/* Jurusan */}
                             <td className="px-6 py-4 text-center">
                               <Badge variant="primary">
                                 {b.jurusan || "-"}
                               </Badge>
                             </td>
-                            {/* Total Unit */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {totalUnits}
                             </td>
-                            {/* Dipinjam */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {dipinjamCount}
                             </td>
-                            {/* Tersedia */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {tersediaCount}
                             </td>
-                            {/* Aksi (hanya tombol Pinjam) */}
                             <td className="px-6 py-4 text-center text-sm font-medium">
                               <button
                                 disabled={tersediaCount < 1}
@@ -371,7 +359,6 @@ export default function PeminjamanManagement() {
                   </table>
                 </div>
               )}
-
               <div className="mt-4">
                 <Pagination
                   currentPage={pageTidakHabis}
@@ -381,15 +368,16 @@ export default function PeminjamanManagement() {
               </div>
             </div>
 
+            {/* Separator */}
             <div className="flex items-center my-8">
-              <div className="flex-grow border-t border-gray-300"></div>
+              <div className="flex-grow border-t border-gray-300" />
               <span className="mx-4 text-gray-500 uppercase text-sm tracking-wider">
                 Consumable
               </span>
-              <div className="flex-grow border-t border-gray-300"></div>
+              <div className="flex-grow border-t border-gray-300" />
             </div>
 
-            {/* ===== TABEL 2: Habis Pakai ===== */}
+            {/* TABEL 2: Habis Pakai */}
             <div>
               {pagedHabisPakai.length === 0 ? (
                 <p className="text-center p-6 text-gray-500">
@@ -412,15 +400,12 @@ export default function PeminjamanManagement() {
                         )}
                       </tr>
                     </thead>
-
                     <tbody className="bg-white divide-y divide-gray-200">
                       {pagedHabisPakai.map((b) => {
                         const totalStok = b.stok;
                         const tersediaCount = totalStok;
-
                         return (
                           <tr key={b._id} className="hover:bg-gray-50">
-                            {/* ★ UBAH – Nama dengan ikon Info di samping */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               <div className="flex items-center justify-center space-x-2">
                                 <span>{b.nama || "-"}</span>
@@ -433,21 +418,17 @@ export default function PeminjamanManagement() {
                                 </button>
                               </div>
                             </td>
-                            {/* Jurusan */}
                             <td className="px-6 py-4 text-center">
                               <Badge variant="primary">
                                 {b.jurusan || "-"}
                               </Badge>
                             </td>
-                            {/* Stok */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {totalStok}
                             </td>
-                            {/* Tersedia */}
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {tersediaCount}
                             </td>
-                            {/* Aksi (hanya tombol Pinjam) */}
                             <td className="px-6 py-4 text-center text-sm font-medium">
                               <button
                                 disabled={tersediaCount < 1}
@@ -469,7 +450,6 @@ export default function PeminjamanManagement() {
                   </table>
                 </div>
               )}
-
               <div className="mt-4">
                 <Pagination
                   currentPage={pageHabis}
@@ -480,7 +460,7 @@ export default function PeminjamanManagement() {
             </div>
           </div>
 
-          {/* ---------- MODAL FORM PINJAM ---------- */}
+          {/* MODAL FORM PINJAM */}
           <PeminjamanForm
             isOpen={showForm}
             onClose={() => {

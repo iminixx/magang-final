@@ -4,120 +4,108 @@ import { Combobox } from "@headlessui/react";
 import Select from "react-select";
 import { fetchSiswa } from "../api/siswaApi";
 
-export default function PeminjamanForm({
+export default function PeminjamanSiswaForm({
   isOpen,
   onClose,
   onSubmit,
   barangList,
   initialBarang,
 }) {
-  // ---------- STATE PEMINJAM ----------
-  const [peminjamType, setPeminjamType] = useState(""); // "siswa" atau "lainnya"
+  // — STATE PEMINJAM SISWA —
   const [selectedJurusan, setSelectedJurusan] = useState("");
   const [selectedKelas, setSelectedKelas] = useState("");
   const [siswaOptions, setSiswaOptions] = useState([]);
   const [selectedSiswa, setSelectedSiswa] = useState(null);
-  const [namaNonSiswa, setNamaNonSiswa] = useState("");
-  const [asalNonSiswa, setAsalNonSiswa] = useState("");
-  const [peminjamPhone, setPeminjamPhone] = useState(""); // NEW
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [peminjamPhone, setPeminjamPhone] = useState("");
 
-  // ---------- STATE BARANG ----------
+  // — STATE BARANG & PINJAM —
   const [selectedBarangId, setSelectedBarangId] = useState("");
   const [selectedBarangObj, setSelectedBarangObj] = useState(null);
-
-  // ---------- STATE PINJAMAN ----------
   const [jumlah, setJumlah] = useState(1);
   const [unitOptions, setUnitOptions] = useState([]);
   const [selectedUnits, setSelectedUnits] = useState([]);
   const [keterangan, setKeterangan] = useState("");
 
-  // ---------- INIT jika initialBarang ----------
+  // Inisialisasi jika initialBarang diberikan
   useEffect(() => {
-    if (initialBarang) {
-      setSelectedBarangObj(initialBarang);
-      setSelectedBarangId(initialBarang._id);
-      // Set unit options jika tipe = tidak_habis_pakai
-      if (initialBarang.tipe === "tidak_habis_pakai") {
-        const available = initialBarang.units.filter(
-          (u) => u.status === "tersedia"
-        );
-        setUnitOptions(available);
-      } else {
-        setUnitOptions([]);
-      }
-      setJumlah(1);
-      setSelectedUnits([]);
+    if (!initialBarang) return;
+    setSelectedBarangObj(initialBarang);
+    setSelectedBarangId(initialBarang._id);
+    setJumlah(1);
+    setSelectedUnits([]);
+    if (initialBarang.tipe === "tidak_habis_pakai") {
+      setUnitOptions(
+        initialBarang.units.filter((u) => u.status === "tersedia")
+      );
     }
   }, [initialBarang]);
 
-  // ---------- HANDLE pilih barang ----------
+  // saat ganti barang
   const handleBarangChange = (e) => {
-    const barangId = e.target.value;
-    setSelectedBarangId(barangId);
-    const obj = barangList.find((b) => b._id === barangId) || null;
-    setSelectedBarangObj(obj);
-
-    // Reset jumlah & unit selection
+    const id = e.target.value;
+    setSelectedBarangId(id);
+    const b = barangList.find((x) => x._id === id) || null;
+    setSelectedBarangObj(b);
     setJumlah(1);
     setSelectedUnits([]);
-
-    if (obj && obj.tipe === "tidak_habis_pakai") {
-      const available = obj.units.filter((u) => u.status === "tersedia");
-      setUnitOptions(available);
-    } else {
-      setUnitOptions([]);
-    }
+    setUnitOptions(
+      b?.tipe === "tidak_habis_pakai"
+        ? b.units.filter((u) => u.status === "tersedia")
+        : []
+    );
   };
 
-  // ---------- FETCH siswa ----------
-  const handleSiswaSearch = async (query) => {
+  // cari siswa di server
+  const handleSiswaSearch = async (q) => {
     if (!selectedJurusan || !selectedKelas) return;
-    try {
-      const res = await fetchSiswa({
-        jurusan: selectedJurusan,
-        kelas: selectedKelas,
-        nama: query,
-      });
-      setSiswaOptions(res.data.data);
-    } catch (err) {
-      console.error("Error fetch siswa:", err);
-    }
+    const res = await fetchSiswa({
+      jurusan: selectedJurusan,
+      kelas: selectedKelas,
+      nama: q,
+    });
+    setSiswaOptions(res.data.data);
   };
 
-  // ---------- VALIDASI tombol Submit ----------
+  // cek apakah tombol Simpan boleh aktif
   const canSubmit = () => {
     if (!selectedBarangObj) return false;
-    if (!peminjamType) return false;
-    if (!peminjamPhone.trim()) return false; // NEW
-    if (peminjamType === "siswa") {
-      if (!selectedSiswa) return false;
-    } else {
-      if (!namaNonSiswa.trim() || !asalNonSiswa.trim()) return false;
-    }
-    // Jika barang habis_pakai
+    if (!selectedSiswa || pin.trim().length !== 6) return false;
+    if (!peminjamPhone.trim()) return false;
     if (selectedBarangObj.tipe === "habis_pakai") {
       if (jumlah < 1 || jumlah > selectedBarangObj.stok) return false;
     }
-    // Jika barang unit
-    if (selectedBarangObj.tipe === "tidak_habis_pakai") {
-      if (selectedUnits.length < 1) return false;
-    }
+    if (
+      selectedBarangObj.tipe === "tidak_habis_pakai" &&
+      selectedUnits.length === 0
+    )
+      return false;
     return true;
   };
 
-  // ---------- SUBMIT ----------
-  const handleSubmit = () => {
+  // submit: validasi PIN dulu
+  const handleSubmit = async () => {
     if (!canSubmit()) return;
+    // validasi PIN
+    const resp = await fetch("/api/siswa/validate-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ siswaId: selectedSiswa._id, pin: pin.trim() }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      setPinError(err.message || "PIN salah");
+      return;
+    }
+    setPinError("");
 
+    // payload
     const payload = {
       barang: selectedBarangId,
-      peminjamType,
-      peminjamSiswa: peminjamType === "siswa" ? selectedSiswa._id : undefined,
-      peminjamNama:
-        peminjamType === "lainnya" ? namaNonSiswa.trim() : undefined,
-      peminjamAsal:
-        peminjamType === "lainnya" ? asalNonSiswa.trim() : undefined,
-      peminjamPhone: peminjamPhone.trim(), // NEW
+      peminjamType: "siswa",
+      peminjamSiswa: selectedSiswa._id,
+      peminjamPhone: peminjamPhone.trim(),
       isConsumable: selectedBarangObj.tipe === "habis_pakai",
       jumlah: selectedBarangObj.tipe === "habis_pakai" ? jumlah : undefined,
       unitKodes:
@@ -126,264 +114,177 @@ export default function PeminjamanForm({
           : undefined,
       keterangan: keterangan.trim(),
     };
-
-    console.log("Payload yang dikirim:", JSON.stringify(payload, null, 2));
-
     onSubmit(payload);
-
-    // ---------- RESET form ----------
-    setPeminjamType("");
-    setSelectedJurusan("");
-    setSelectedKelas("");
-    setSelectedSiswa(null);
-    setNamaNonSiswa("");
-    setAsalNonSiswa("");
-    setPeminjamPhone(""); // NEW
-    if (!initialBarang) {
-      setSelectedBarangId("");
-      setSelectedBarangObj(null);
-      setUnitOptions([]);
-    }
-    setJumlah(1);
-    setSelectedUnits([]);
-    setKeterangan("");
+    onClose();
   };
 
   if (!isOpen) return null;
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Form Peminjaman">
+    <Modal isOpen={isOpen} onClose={onClose} title="Peminjaman (Siswa)">
       <div className="space-y-4">
-        {/* -------- Tipe Peminjam -------- */}
+        {/* Jurusan */}
         <div>
-          <label className="block text-sm font-medium">Peminjam Sebagai</label>
+          <label className="block text-sm font-medium">Jurusan</label>
           <select
-            value={peminjamType}
+            className="mt-1 w-full border rounded p-2"
+            value={selectedJurusan}
             onChange={(e) => {
-              setPeminjamType(e.target.value);
-              // Reset data peminjam ketika bertukar tipe
-              setSelectedJurusan("");
+              setSelectedJurusan(e.target.value);
               setSelectedKelas("");
               setSelectedSiswa(null);
-              setNamaNonSiswa("");
-              setAsalNonSiswa("");
-              setSiswaOptions([]);
             }}
-            className="mt-1 block w-full border rounded p-2"
-            required
           >
-            <option value="">-- Pilih Tipe Peminjam --</option>
-            <option value="siswa">Siswa</option>
-            <option value="lainnya">Lainnya</option>
+            <option value="">Pilih Jurusan</option>
+            <option value="RPL">RPL</option>
+            <option value="DKV">DKV</option>
+            <option value="TKJ">TKJ</option>
           </select>
         </div>
-        {/* -------- Jika Peminjam = Siswa -------- */}
-        {peminjamType === "siswa" && (
-          <>
-            {/* Dropdown Jurusan */}
-            <div>
-              <label className="block text-sm font-medium">Jurusan</label>
-              <select
-                value={selectedJurusan}
-                onChange={(e) => {
-                  setSelectedJurusan(e.target.value);
-                  setSelectedKelas("");
-                  setSelectedSiswa(null);
-                  setSiswaOptions([]);
-                }}
-                className="mt-1 block w-full border rounded p-2"
-                required
-              >
-                <option value="">-- Pilih Jurusan --</option>
-                <option value="RPL">RPL</option>
-                <option value="DKV">DKV</option>
-                <option value="TKJ">TKJ</option>
-              </select>
-            </div>
 
-            {/* Dropdown Kelas */}
-            {selectedJurusan && (
-              <div>
-                <label className="block text-sm font-medium">Kelas</label>
-                <select
-                  value={selectedKelas}
-                  onChange={(e) => {
-                    setSelectedKelas(e.target.value);
-                    setSelectedSiswa(null);
-                    setSiswaOptions([]);
-                  }}
-                  className="mt-1 block w-full border rounded p-2"
-                  required
-                >
-                  <option value="">-- Pilih Kelas --</option>
-                  <option value="X">X</option>
-                  <option value="XI">XI</option>
-                  <option value="XII">XII</option>
-                </select>
-              </div>
-            )}
+        {/* Kelas */}
+        {selectedJurusan && (
+          <div>
+            <label className="block text-sm font-medium">Kelas</label>
+            <select
+              className="mt-1 w-full border rounded p-2"
+              value={selectedKelas}
+              onChange={(e) => {
+                setSelectedKelas(e.target.value);
+                setSelectedSiswa(null);
+              }}
+            >
+              <option value="">Pilih Kelas</option>
+              <option value="X">X</option>
+              <option value="XI">XI</option>
+              <option value="XII">XII</option>
+            </select>
+          </div>
+        )}
 
-            {/* Combobox Nama Siswa */}
-            {selectedJurusan && selectedKelas && (
-              <div>
-                <label className="block text-sm font-medium">Nama Siswa</label>
-                <Combobox value={selectedSiswa} onChange={setSelectedSiswa}>
-                  <Combobox.Input
-                    className="w-full border rounded p-2"
-                    onChange={(e) => handleSiswaSearch(e.target.value)}
-                    displayValue={(s) => (s ? s.nama : "")}
-                    placeholder="Ketik nama siswa..."
-                    required
-                  />
-                  <Combobox.Options className="border rounded mt-1 max-h-40 overflow-auto">
-                    {siswaOptions.map((s) => (
-                      <Combobox.Option key={s._id} value={s}>
-                        {({ active, selected }) => (
-                          <div
-                            className={`p-2 cursor-pointer ${
-                              active ? "bg-gray-100" : ""
-                            } ${selected ? "font-semibold" : ""}`}
-                          >
-                            {s.nama} – {s.kelas} {s.jurusan}
-                          </div>
-                        )}
-                      </Combobox.Option>
-                    ))}
-                  </Combobox.Options>
-                </Combobox>
-              </div>
-            )}
-          </>
-        )}
-        {/* -------- Jika Peminjam = Lainnya -------- */}
-        {peminjamType === "lainnya" && (
-          <>
-            <div>
-              <label className="block text-sm font-medium">Nama Peminjam</label>
-              <input
-                type="text"
-                value={namaNonSiswa}
-                onChange={(e) => setNamaNonSiswa(e.target.value)}
-                className="mt-1 block w-full border rounded p-2"
-                placeholder="Masukkan nama peminjam"
-                required
+        {/* Combobox Nama Siswa */}
+        {selectedJurusan && selectedKelas && (
+          <div>
+            <label className="block text-sm font-medium">Nama Siswa</label>
+            <Combobox value={selectedSiswa} onChange={setSelectedSiswa}>
+              <Combobox.Input
+                className="w-full border rounded p-2"
+                onChange={(e) => handleSiswaSearch(e.target.value)}
+                displayValue={(s) => s?.nama || ""}
+                placeholder="Ketik nama..."
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">
-                Asal / Instansi
-              </label>
-              <input
-                type="text"
-                value={asalNonSiswa}
-                onChange={(e) => setAsalNonSiswa(e.target.value)}
-                className="mt-1 block w-full border rounded p-2"
-                placeholder="Masukkan asal peminjam"
-                required
-              />
-            </div>
-          </>
+              <Combobox.Options className="border rounded mt-1 max-h-40 overflow-auto">
+                {siswaOptions.map((s) => (
+                  <Combobox.Option key={s._id} value={s}>
+                    {({ active, selected }) => (
+                      <div
+                        className={`${active ? "bg-gray-100" : ""} ${
+                          selected ? "font-semibold" : ""
+                        } p-2 cursor-pointer`}
+                      >
+                        {s.nama} – {s.kelas} {s.jurusan}
+                      </div>
+                    )}
+                  </Combobox.Option>
+                ))}
+              </Combobox.Options>
+            </Combobox>
+          </div>
         )}
-        {/* -------- Nomor Telepon (Selalu Wajib) -------- */} {/* NEW */}
+
+        {/* PIN */}
+        {selectedSiswa && (
+          <div>
+            <label className="block text-sm font-medium">PIN</label>
+            <input
+              type="password"
+              className="mt-1 w-full border rounded p-2"
+              value={pin}
+              onChange={(e) => {
+                setPin(e.target.value);
+                setPinError("");
+              }}
+              placeholder="6 digit"
+            />
+            {pinError && <p className="text-red-600 text-sm">{pinError}</p>}
+          </div>
+        )}
+
+        {/* Telepon */}
         <div>
-          <label className="block text-sm font-medium">Nomor Telepon</label>
+          <label className="block text-sm font-medium">Telepon</label>
           <input
             type="tel"
+            className="mt-1 w-full border rounded p-2"
             value={peminjamPhone}
             onChange={(e) => setPeminjamPhone(e.target.value)}
-            className="mt-1 block w-full border rounded p-2"
-            placeholder="08xxxxxxxxxx atau +628xxxxxxxxxx"
-            required
           />
         </div>
-        {/* -------- Pilih Barang -------- */}
+
+        {/* Pilih Barang */}
         <div>
           <label className="block text-sm font-medium">Barang</label>
-          {initialBarang ? (
-            <div className="mt-1 p-2 bg-gray-100 rounded">
-              {initialBarang.nama}
-            </div>
-          ) : (
-            <select
-              value={selectedBarangId}
-              onChange={handleBarangChange}
-              className="mt-1 block w-full border rounded p-2"
-              required
-            >
-              <option value="">-- Pilih Barang --</option>
-              {barangList.map((b) => (
-                <option key={b._id} value={b._id}>
-                  {b.nama} ({b.jurusan})[
-                  {b.tipe === "habis_pakai" ? "Habis Pakai" : "Pinjam"}] —{" "}
-                  {b.tipe === "habis_pakai"
-                    ? `Stok: ${b.stok}`
-                    : `Sisa: ${b.stok - (b.stok_dipinjam || 0)}`}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            className="mt-1 w-full border rounded p-2"
+            value={selectedBarangId}
+            onChange={handleBarangChange}
+          >
+            <option value="">Pilih Barang</option>
+            {barangList.map((b) => (
+              <option key={b._id} value={b._id}>
+                {b.nama} [{b.tipe === "habis_pakai" ? "Habis Pakai" : "Pinjam"}]
+                —{" "}
+                {b.tipe === "habis_pakai"
+                  ? `Stok: ${b.stok}`
+                  : `Unit tersedia: ${
+                      b.units.filter((u) => u.status === "tersedia").length
+                    }`}
+              </option>
+            ))}
+          </select>
         </div>
-        {/* -------- Input Jumlah / Multi-select Unit -------- */}
-        {selectedBarangObj && selectedBarangObj.tipe === "habis_pakai" && (
+
+        {/* Jumlah atau Pilih Unit */}
+        {selectedBarangObj?.tipe === "habis_pakai" && (
           <div>
-            <label className="block text-sm font-medium">
-              Jumlah (Habis Pakai)
-            </label>
+            <label className="block text-sm font-medium">Jumlah</label>
             <input
               type="number"
               min="1"
               max={selectedBarangObj.stok}
+              className="mt-1 w-full border rounded p-2"
               value={jumlah}
-              onChange={(e) => setJumlah(parseInt(e.target.value) || 1)}
-              className="mt-1 block w-full border rounded p-2"
-              placeholder={`Maksimum ${selectedBarangObj.stok}`}
-              required
+              onChange={(e) => setJumlah(+e.target.value)}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Maks: {selectedBarangObj.stok}
-            </p>
           </div>
         )}
-        {selectedBarangObj &&
-          selectedBarangObj.tipe === "tidak_habis_pakai" && (
-            <div>
-              <label className="block text-sm font-medium">
-                Pilih Kode Unit
-              </label>
-              <Select
-                isMulti
-                options={unitOptions.map((u) => ({
-                  value: u.kode,
-                  label: u.kode,
-                }))}
-                value={selectedUnits.map((kode) => ({
-                  value: kode,
-                  label: kode,
-                }))}
-                onChange={(arr) => setSelectedUnits(arr.map((a) => a.value))}
-                className="mt-1"
-                placeholder="Ketik untuk cari kode unit..."
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Sisa unit tersedia: {unitOptions.length}
-              </p>
-            </div>
-          )}
-        {/* -------- Textarea Keterangan -------- */}
+        {selectedBarangObj?.tipe === "tidak_habis_pakai" && (
+          <div>
+            <label className="block text-sm font-medium">Pilih Unit</label>
+            <Select
+              isMulti
+              options={unitOptions.map((u) => ({
+                value: u.kode,
+                label: u.kode,
+              }))}
+              value={selectedUnits.map((k) => ({ value: k, label: k }))}
+              onChange={(arr) => setSelectedUnits(arr.map((a) => a.value))}
+              className="mt-1"
+            />
+          </div>
+        )}
+
+        {/* Keterangan */}
         <div>
-          <label className="block text-sm font-medium">
-            Keterangan Peminjaman
-          </label>
+          <label className="block text-sm font-medium">Keterangan</label>
           <textarea
+            className="mt-1 w-full border rounded p-2"
+            rows={3}
             value={keterangan}
             onChange={(e) => setKeterangan(e.target.value)}
-            rows="3"
-            className="mt-1 block w-full border rounded p-2"
-            placeholder="(Opsional) Alasan atau catatan khusus"
           />
         </div>
-        {/* -------- Tombol Aksi -------- */}
+
+        {/* Aksi */}
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
             Batal
@@ -392,9 +293,7 @@ export default function PeminjamanForm({
             onClick={handleSubmit}
             disabled={!canSubmit()}
             className={`px-4 py-2 rounded text-white ${
-              canSubmit()
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-gray-300 cursor-not-allowed"
+              canSubmit() ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300"
             }`}
           >
             Simpan

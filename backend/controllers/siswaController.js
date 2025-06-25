@@ -1,9 +1,93 @@
 const Siswa = require("../models/Siswa");
+const csv = require("csv-parser");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+
+const upload = multer({ dest: "uploads/" });
 function generatePin() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// ambil semua siswa
+exports.importCSV = [
+  upload.single("file"),
+  async (req, res) => {
+    const results = [];
+    try {
+      fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on("data", (data) => {
+          if (!data.nama || !data.jurusan || !data.kelas) return;
+
+          results.push({
+            nama: data.nama.trim(),
+            jurusan: data.jurusan.trim(),
+            kelas: data.kelas.trim(),
+            pin: generatePin(),
+          });
+        })
+        .on("end", async () => {
+          await Siswa.insertMany(results);
+          fs.unlinkSync(req.file.path);
+          res.json({
+            message: "Data siswa berhasil diimpor",
+            count: results.length,
+          });
+        });
+    } catch (err) {
+      console.error("Import CSV error:", err);
+      res.status(500).json({ message: "Gagal mengimpor CSV" });
+    }
+  },
+];
+
+exports.batchDelete = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "ID siswa tidak valid" });
+    }
+
+    const result = await Siswa.deleteMany({ _id: { $in: ids } });
+
+    res.json({
+      message: `${result.deletedCount} siswa berhasil dihapus`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (err) {
+    console.error("Error batch delete siswa:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.batchUpdate = async (req, res) => {
+  try {
+    const { ids, update } = req.body;
+
+    if (
+      !Array.isArray(ids) ||
+      ids.length === 0 ||
+      !update ||
+      typeof update !== "object"
+    ) {
+      return res.status(400).json({ message: "Data tidak valid" });
+    }
+
+    const result = await Siswa.updateMany(
+      { _id: { $in: ids } },
+      { $set: update }
+    );
+
+    res.json({
+      message: `${result.modifiedCount} siswa berhasil diupdate`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (err) {
+    console.error("Error batch update siswa:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.getAll = async (req, res) => {
   try {
     const data = await Siswa.find().sort({ nama: 1 });
@@ -32,7 +116,6 @@ exports.getByJurusanKelas = async (req, res) => {
   }
 };
 
-// create siswa
 exports.create = async (req, res) => {
   try {
     const { nama, jurusan, kelas } = req.body;
@@ -55,7 +138,6 @@ exports.create = async (req, res) => {
   }
 };
 
-// update siswa
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
@@ -77,7 +159,6 @@ exports.update = async (req, res) => {
   }
 };
 
-// delete siswa
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
@@ -92,7 +173,6 @@ exports.delete = async (req, res) => {
   }
 };
 
-// validasi PIN siswa
 exports.validatePin = async (req, res) => {
   try {
     const { siswaId, pin } = req.body;

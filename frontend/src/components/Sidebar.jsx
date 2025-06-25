@@ -38,6 +38,11 @@ const allMenuItems = [
         roles: ["admin", "user"],
       },
       {
+        label: "Daftar Peminjaman Lainnya",
+        to: "/peminjaman-lainnya/create",
+        roles: ["admin"],
+      },
+      {
         label: "Status Peminjaman",
         to: "/peminjaman/list",
         roles: ["admin", "user"],

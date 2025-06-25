@@ -10,6 +10,7 @@ import AdminApproval from "./pages/ApprovalPage";
 import ReportsPage from "./pages/ReportsPage";
 import HistoryPage from "./pages/HistoryPage";
 import ManageSiswaPage from "./pages/ManageSiswaPage";
+import PeminjamanLainnyaPage from "./pages/ManagePeminjamanLainnya";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -69,11 +70,24 @@ function App() {
       />
 
       <Route
-        path="/peminjaman/create" // atau bisa diganti menjadi "/peminjaman/create"
+        path="/peminjaman/create"
         element={
           isAuthenticated ? (
             <Layout>
               <PeminjamanManagement />
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/peminjaman-lainnya/create"
+        element={
+          isAuthenticated ? (
+            <Layout>
+              <PeminjamanLainnyaPage />
             </Layout>
           ) : (
             <Navigate to="/login" replace />
