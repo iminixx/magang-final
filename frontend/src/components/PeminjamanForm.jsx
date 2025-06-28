@@ -58,14 +58,18 @@ export default function PeminjamanSiswaForm({
   };
 
   // cari siswa di server
-  const handleSiswaSearch = async (q) => {
+  const handleSiswaSearch = async (query) => {
     if (!selectedJurusan || !selectedKelas) return;
-    const res = await fetchSiswa({
-      jurusan: selectedJurusan,
-      kelas: selectedKelas,
-      nama: q,
-    });
-    setSiswaOptions(res.data.data);
+    try {
+      const res = await fetchSiswa({
+        jurusan: selectedJurusan,
+        kelas: selectedKelas,
+        nama: query,
+      });
+      setSiswaOptions(res.data.data);
+    } catch (err) {
+      console.error("Error fetch siswa:", err);
+    }
   };
 
   // cek apakah tombol Simpan boleh aktif
@@ -132,6 +136,7 @@ export default function PeminjamanSiswaForm({
               setSelectedJurusan(e.target.value);
               setSelectedKelas("");
               setSelectedSiswa(null);
+              setSiswaOptions([]);
             }}
           >
             <option value="">Pilih Jurusan</option>
@@ -151,6 +156,7 @@ export default function PeminjamanSiswaForm({
               onChange={(e) => {
                 setSelectedKelas(e.target.value);
                 setSelectedSiswa(null);
+                setSiswaOptions([]);
               }}
             >
               <option value="">Pilih Kelas</option>

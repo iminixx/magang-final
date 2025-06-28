@@ -3,17 +3,6 @@ const router = express.Router();
 const { body, validationResult } = require("express-validator");
 const peminjamanController = require("../controllers/peminjamanController");
 
-/**
- * Middleware validasi untuk Peminjaman.create:
- * - barang: wajib ObjectId
- * - peminjamType: wajib "siswa" atau "lainnya"
- * - Jika peminjamType = "siswa": peminjamSiswa wajib ada
- * - Jika peminjamType = "lainnya": peminjamNama + peminjamAsal wajib ada (string non-empty)
- * - isConsumable: wajib boolean
- * - Jika isConsumable = true: jumlah wajib integer ≥ 1
- * - Jika isConsumable = false: unitKodes wajib array string minimal satu elemen
- * - keterangan: optional string
- */
 const validatePeminjaman = [
   body("barang")
     .notEmpty()

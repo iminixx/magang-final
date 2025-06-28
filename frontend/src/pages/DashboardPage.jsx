@@ -30,7 +30,6 @@ export default function DashboardPage() {
         const res = await fetch("/api/dashboard/stats");
         const json = await res.json();
 
-        // Fetching summary data
         const summary = json.summaryByJurusan || {};
         const cardArray = Object.entries(summary).map(([jurusan, data]) => ({
           jurusan,
@@ -44,7 +43,6 @@ export default function DashboardPage() {
         }));
         setCards(cardArray);
 
-        // Fetching quick stats
         const totals = {
           totalBarang: 0,
           totalDipinjam: 0,
@@ -67,7 +65,6 @@ export default function DashboardPage() {
           { title: "Hilang", value: totals.totalHilang },
         ]);
 
-        // Fetching chart data
         const chartArr = Object.entries(summary).map(([jurusan, d]) => ({
           name: jurusan,
           Dipinjam: d.totalDipinjam || 0,
@@ -76,7 +73,6 @@ export default function DashboardPage() {
         }));
         setChartData(chartArr);
 
-        // Fetching the latest transactions
         const latestTransactionsRes = await fetch("/api/peminjaman");
         const latestTransactionsJson = await latestTransactionsRes.json();
         const formattedTx = latestTransactionsJson.data.map((l) => ({
@@ -92,7 +88,6 @@ export default function DashboardPage() {
         }));
         setTransactions(formattedTx);
 
-        // Fetching loans per day by jurusan
         setLoansPerDayByJurusan(json.loansPerDayByJurusan || []);
       } catch (err) {
         console.error("Dashboard fetch error:", err);

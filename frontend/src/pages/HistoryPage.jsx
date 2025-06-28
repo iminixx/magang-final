@@ -240,11 +240,24 @@ const HistoryPage = () => {
     },
     {
       key: "user",
-      label: "User",
+      label: "Peminjam",
       render: (h) =>
         h.peminjamType === "siswa"
           ? h.peminjamSiswa?.nama || "-"
           : h.peminjamNama || "-",
+    },
+    {
+      key: "asal",
+      label: "Asal",
+      render: (h) =>
+        h.peminjamType === "siswa"
+          ? h.peminjamSiswa?.kelas || "-"
+          : h.peminjamAsal || "-",
+    },
+    {
+      key: "telepon",
+      label: "No. Telepon",
+      render: (h) => h.peminjamPhone || "-",
     },
     {
       key: "barang",
@@ -273,15 +286,24 @@ const HistoryPage = () => {
   const exportHist = () => {
     const headers = [
       "Tgl Pinjam",
-      "User",
+      "Peminjam",
+      "Asal",
+      "No. Telepon",
       "Barang",
       "Jumlah/Unit",
       "Status",
       "Tgl Kembali",
     ];
+
     const rows = paginatedHist.map((h) => [
       new Date(h.tglPinjam).toLocaleDateString("id-ID"),
-      h.peminjamNama || "",
+      h.peminjamType === "siswa"
+        ? h.peminjamSiswa?.nama || ""
+        : h.peminjamNama || "",
+      h.peminjamType === "siswa"
+        ? h.peminjamSiswa?.kelas || ""
+        : h.peminjamAsal || "",
+      h.peminjamPhone || "",
       h.barang?.nama || "",
       h.isConsumable
         ? h.jumlah

@@ -47,6 +47,12 @@ const allMenuItems = [
         to: "/peminjaman/list",
         roles: ["admin", "user"],
       },
+      {
+        icon: Package,
+        label: "Pengembalian",
+        to: "/return-item",
+        roles: ["admin"],
+      },
     ],
   },
   {

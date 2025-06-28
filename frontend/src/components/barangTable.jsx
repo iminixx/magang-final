@@ -1,9 +1,8 @@
 import React from "react";
-import { Edit, Trash2, Info as InfoIcon } from "lucide-react"; // ★ NEW: import InfoIcon
+import { Edit, Trash2, Info as InfoIcon } from "lucide-react";
 import Badge from "../components/Badge";
 
 const BarangTable = ({ data, onEdit, onDelete, onInfo }) => {
-  // ★ NEW: tambah prop onInfo
   const getStatusVariant = (status) => {
     switch (status) {
       case "tersedia":

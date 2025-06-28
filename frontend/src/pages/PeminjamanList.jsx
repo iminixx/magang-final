@@ -1,3 +1,4 @@
+// src/pages/PeminjamanList.jsx
 import React, { useState } from "react";
 import usePeminjaman from "../components/UsePeminjaman";
 import PeminjamanTable from "../components/PeminjamanTable";
@@ -21,68 +22,53 @@ export default function PeminjamanList() {
 
   const [jurusanBarang, setJurusanBarang] = useState("");
 
-  // Ambil role pengguna dari local storage
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
-  const role = user?.role === "admin" ? "admin" : "user"; // non-admin fallback to 'user'
+  const role = user?.role === "admin" ? "admin" : "user";
 
-  const filtered = data
-    .filter((r) => {
-      const nama =
-        r.peminjamType === "siswa"
-          ? r.peminjamSiswa?.nama || ""
-          : r.peminjamNama || "";
-      return (
-        !searchTerm || nama.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    })
-    .filter((r) =>
-      jurusanBarang ? r.barang?.jurusan === jurusanBarang : true
+  const filtered = data.filter((r) => {
+    const nama =
+      r.peminjamType === "siswa"
+        ? r.peminjamSiswa?.nama || ""
+        : r.peminjamNama || "";
+    return (
+      (!searchTerm || nama.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (!jurusanBarang || r.barang?.jurusan === jurusanBarang)
     );
+  });
 
-  async function handleReturn(id) {
-    try {
-      const res = await fetch(`${API_LOAN}/${id}/return`, { method: "PUT" });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.message || "Gagal melakukan return");
-      }
-      await res.json();
-      await fetchData();
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
-    }
-  }
+  const pendingData = filtered.filter((r) => r.status === "pending");
+  const approvedData = filtered.filter((r) => r.status === "approved");
+  const rejectedData = filtered.filter((r) => r.status === "rejected");
 
-  async function handleDelete(id, status) {
-    // Tampilkan dialog konfirmasi
-    const confirmDelete = window.confirm(
-      "Apakah Anda yakin ingin menghapus peminjaman ini?"
-    );
-    if (!confirmDelete) {
-      return; // Batalkan jika pengguna tidak mengonfirmasi
-    }
-
-    // Cek role dan status sebelum menghapus
-    if (role === "user" && status !== "pending") {
-      alert("Anda hanya dapat menghapus peminjaman yang berstatus 'pending'.");
+  const handleDelete = async (id, status) => {
+    if (status !== "pending") {
+      alert("Hanya peminjaman berstatus 'pending' yang bisa dihapus.");
       return;
     }
+
+    const confirmDelete = window.confirm(
+      "Yakin ingin menghapus peminjaman ini?"
+    );
+    if (!confirmDelete) return;
 
     try {
       await fetch(`${API_LOAN}/${id}`, { method: "DELETE" });
       await fetchData();
     } catch (err) {
       console.error(err);
-      alert("Gagal menghapus peminjaman");
+      alert("Gagal menghapus peminjaman.");
     }
-  }
+  };
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <main className="p-8 flex-1 overflow-auto min-w-0">
-        {/* ... Breadcrumb and other components ... */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Status Peminjaman
+          </h1>
+        </div>
 
         <div className="bg-white rounded-3xl shadow-lg p-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -100,18 +86,56 @@ export default function PeminjamanList() {
             />
           </div>
 
-          <div className="w-full max-w-full overflow-x-auto min-w-0">
-            {loading ? (
-              <p className="p-6 text-gray-600">Memuat data...</p>
-            ) : (
-              <PeminjamanTable
-                data={filtered}
-                onReturn={handleReturn}
-                onDelete={handleDelete}
-                userRole={role} // Kirim role pengguna ke PeminjamanTable
-              />
-            )}
-          </div>
+          {loading ? (
+            <p className="text-gray-600">Memuat data...</p>
+          ) : (
+            <>
+              {/* Pending */}
+              {pendingData.length > 0 && (
+                <>
+                  <h2 className="font-semibold text-lg mb-2 text-yellow-600">
+                    Pending
+                  </h2>
+                  <PeminjamanTable
+                    data={pendingData}
+                    onReturn={() => {}}
+                    onDelete={handleDelete}
+                    userRole={role}
+                  />
+                </>
+              )}
+
+              {/* Approved */}
+              {approvedData.length > 0 && (
+                <>
+                  <h2 className="font-semibold text-lg mt-8 mb-2 text-green-600">
+                    Disetujui
+                  </h2>
+                  <PeminjamanTable
+                    data={approvedData}
+                    onReturn={() => {}}
+                    onDelete={() => {}}
+                    userRole={role}
+                  />
+                </>
+              )}
+
+              {/* Rejected */}
+              {rejectedData.length > 0 && (
+                <>
+                  <h2 className="font-semibold text-lg mt-8 mb-2 text-red-600">
+                    Ditolak
+                  </h2>
+                  <PeminjamanTable
+                    data={rejectedData}
+                    onReturn={() => {}}
+                    onDelete={() => {}}
+                    userRole={role}
+                  />
+                </>
+              )}
+            </>
+          )}
 
           <div className="mt-6">
             <Pagination

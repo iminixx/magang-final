@@ -107,7 +107,7 @@ exports.getByJurusanKelas = async (req, res) => {
     if (nama) filter.nama = { $regex: nama, $options: "i" };
 
     const data = await Siswa.find(filter)
-      .select("nama jurusan kelas")
+      .select("nama jurusan kelas pin")
       .limit(50);
     return res.json({ data });
   } catch (err) {

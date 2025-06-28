@@ -7,6 +7,7 @@ export default function PeminjamanTable({
   onReturn,
   onDelete,
   userRole,
+  showReturnButton = false,
 }) {
   const [showExtra, setShowExtra] = useState(false);
 
@@ -27,6 +28,7 @@ export default function PeminjamanTable({
     "Aksi", // Pindahkan kolom Aksi ke bagian awal
     "Nama Peminjam",
     "Asal/Kelas",
+    "No. Telepon",
     "Barang",
     "Tipe Barang",
     "Jumlah/Unit",
@@ -90,7 +92,8 @@ export default function PeminjamanTable({
               {/* Kolom Aksi dipindahkan ke bagian awal */}
               <td className="px-6 py-4 text-center text-sm font-medium">
                 <div className="flex justify-center gap-2">
-                  {!rec.isConsumable &&
+                  {showReturnButton &&
+                    !rec.isConsumable &&
                     rec.status === "approved" &&
                     rec.rentalStatus === "pinjam" && (
                       <button
@@ -124,7 +127,9 @@ export default function PeminjamanTable({
                     : "-"
                   : rec.peminjamAsal || "-"}
               </td>
-
+              <td className="px-6 py-4 text-sm text-gray-900 text-center">
+                {rec.peminjamPhone || "-"}
+              </td>
               <td className="px-6 py-4 text-sm text-gray-900 text-center">
                 {rec.barang?.nama || "-"}
               </td>

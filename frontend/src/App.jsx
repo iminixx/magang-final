@@ -11,6 +11,7 @@ import ReportsPage from "./pages/ReportsPage";
 import HistoryPage from "./pages/HistoryPage";
 import ManageSiswaPage from "./pages/ManageSiswaPage";
 import PeminjamanLainnyaPage from "./pages/ManagePeminjamanLainnya";
+import PengembalianPage from "./pages/ReturnPage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -154,6 +155,18 @@ function App() {
           isAuthenticated ? (
             <Layout>
               <ManageSiswaPage />
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/return-item"
+        element={
+          isAuthenticated ? (
+            <Layout>
+              <PengembalianPage />
             </Layout>
           ) : (
             <Navigate to="/login" replace />

@@ -1,4 +1,3 @@
-// src/pages/LoginPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, User as UserIcon, Lock, AlertCircle } from "lucide-react";
@@ -49,9 +48,7 @@ const LoginPage = () => {
         throw new Error(data.message || "Login gagal");
       }
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user)); // Store user including role
-
-      // Redirect ke dashboard dan reload agar state auth terbaca
+      localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/", { replace: true });
       window.location.reload();
     } catch (err) {
@@ -62,14 +59,11 @@ const LoginPage = () => {
   };
 
   return (
-    // ▼ Bagian ini diubah: ubah background dari gradasi gelap ke bg-gray-100 (terang)
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="relative w-full max-w-md">
-        {/* ▼ Ubah form card: dari bg-white/10 + blur ke bg-white polos */}
         <div className="bg-white border border-gray-200 rounded-3xl shadow-2xl p-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-2xl mb-4 shadow-lg">
-              {/* ▼ Ubah ikon: tetap UserIcon, tapi teks default gelap/putih diganti agar cocok di atas putih */}
               <UserIcon className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -146,7 +140,7 @@ const LoginPage = () => {
 
           <div className="mt-6 text-center">
             <p className="text-gray-500 text-xs">
-              © 2024 Sistem Inventaris Sekolah
+              © 2025 Sistem Inventaris Sekolah
             </p>
           </div>
         </div>

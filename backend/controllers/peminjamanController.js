@@ -289,19 +289,24 @@ exports.reject = async (req, res) => {
  */
 exports.returnItem = async (req, res) => {
   const { id } = req.params;
+  const { kondisiMap, unitReturns } = req.body;
+
   try {
     const loan = await Peminjaman.findById(id).populate("barang");
     if (!loan) {
       return res.status(404).json({ message: "Peminjaman tidak ditemukan" });
     }
+
     if (loan.isConsumable) {
       return res
         .status(400)
         .json({ message: "Tidak ada return untuk consumable" });
     }
+
     if (loan.rentalStatus === "kembali") {
       return res.status(400).json({ message: "Barang sudah dikembalikan" });
     }
+
     if (loan.status !== "approved") {
       return res.status(400).json({ message: "Peminjaman belum disetujui" });
     }
@@ -316,7 +321,13 @@ exports.returnItem = async (req, res) => {
     for (const kode of loan.unitKodes) {
       const idx = barang.units.findIndex((u) => u.kode === kode);
       if (idx !== -1 && barang.units[idx].status === "dipinjam") {
-        barang.units[idx].status = "tersedia";
+        const kondisi = unitReturns?.find((u) => u.kode === kode)?.kondisi;
+        if (!["tersedia", "rusak", "hilang"].includes(kondisi)) {
+          return res
+            .status(400)
+            .json({ message: `Kondisi unit ${kode} tidak valid` });
+        }
+        barang.units[idx].status = kondisi;
       }
     }
 
@@ -326,7 +337,10 @@ exports.returnItem = async (req, res) => {
     loan.tglKembali = new Date();
     await loan.save();
 
-    return res.json({ data: loan, message: "Barang berhasil dikembalikan" });
+    return res.json({
+      data: loan,
+      message: "Barang berhasil dikembalikan dengan kondisi",
+    });
   } catch (err) {
     console.error("Error di returnItem Peminjaman:", err);
     return res.status(500).json({ message: "Server error" });
