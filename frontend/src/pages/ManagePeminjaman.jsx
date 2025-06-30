@@ -164,12 +164,12 @@ export default function PeminjamanSiswaPage() {
                   <span className="mx-1">/</span>
                 </li>
                 <li className="text-gray-800 font-semibold">
-                  Peminjaman Siswa
+                  Manage Peminjaman
                 </li>
               </ul>
             </nav>
             <h1 className="text-3xl font-bold text-gray-800">
-              Peminjaman Siswa
+              Daftar Peminjaman
             </h1>
           </div>
 

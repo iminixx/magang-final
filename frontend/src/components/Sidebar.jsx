@@ -1,20 +1,32 @@
 import React, { useRef, useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  Home,
-  Package,
-  Users,
+  LayoutDashboard,
+  Boxes,
+  GraduationCap,
+  ClipboardList,
+  ClipboardCheck,
+  ActivitySquare,
+  RotateCcw,
+  FileBarChart,
+  ListOrdered,
+  Clock,
+  Bell,
   LogOut,
   X,
   User,
-  FileChartColumn,
   ChevronDown,
-  Bell,
+  Package,
 } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
 
 const allMenuItems = [
-  { icon: Home, label: "Dashboard", to: "/", roles: ["admin", "user"] },
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    to: "/",
+    roles: ["admin", "user"],
+  },
   {
     icon: Package,
     label: "Manage Items",
@@ -22,33 +34,36 @@ const allMenuItems = [
     roles: ["admin"],
   },
   {
-    icon: Package,
+    icon: GraduationCap,
     label: "Manage Siswa",
     to: "/manage-siswa",
     roles: ["admin"],
   },
   {
-    icon: Users,
+    icon: ClipboardList,
     label: "Manage Peminjaman",
     roles: ["admin", "user"],
     subItems: [
       {
+        icon: ClipboardList,
         label: "Daftar Peminjaman",
         to: "/peminjaman/create",
         roles: ["admin", "user"],
       },
       {
+        icon: ClipboardCheck,
         label: "Daftar Peminjaman Lainnya",
         to: "/peminjaman-lainnya/create",
         roles: ["admin"],
       },
       {
+        icon: ActivitySquare,
         label: "Status Peminjaman",
         to: "/peminjaman/list",
         roles: ["admin", "user"],
       },
       {
-        icon: Package,
+        icon: RotateCcw,
         label: "Pengembalian",
         to: "/return-item",
         roles: ["admin"],
@@ -56,13 +71,12 @@ const allMenuItems = [
     ],
   },
   {
-    icon: FileChartColumn,
+    icon: FileBarChart,
     label: "Laporan",
-    to: "/reports",
     roles: ["admin"],
     subItems: [
-      { label: "Logs", to: "/reports", roles: ["admin"] },
-      { label: "History", to: "/history", roles: ["admin"] },
+      { icon: ListOrdered, label: "Logs", to: "/reports", roles: ["admin"] },
+      { icon: Clock, label: "History", to: "/history", roles: ["admin"] },
     ],
   },
 ];
@@ -122,12 +136,13 @@ export default function Sidebar() {
   const [heights, setHeights] = useState({});
 
   useEffect(() => {
+    const newHeights = {};
     allMenuItems.forEach((item) => {
       if (item.subItems && subRefs.current[item.label]) {
-        heights[item.label] = subRefs.current[item.label].scrollHeight || 0;
+        newHeights[item.label] = subRefs.current[item.label].scrollHeight || 0;
       }
     });
-    setHeights({ ...heights });
+    setHeights({ ...newHeights });
   }, []);
 
   const filteredMenuItems = allMenuItems.filter((item) =>
@@ -199,8 +214,7 @@ export default function Sidebar() {
                 <div key={item.label}>
                   <button
                     onClick={() => toggleSubmenu(item.label)}
-                    className={`flex w-full items-center px-4 py-3 text-left transition-colors
-                                 hover:bg-blue-50 hover:text-blue-600 text-gray-700`}
+                    className="flex w-full items-center px-4 py-3 text-left transition-colors hover:bg-blue-50 hover:text-blue-600 text-gray-700"
                   >
                     <item.icon size={20} className="mr-3" />
                     <span className="flex-1">{item.label}</span>
@@ -234,6 +248,7 @@ export default function Sidebar() {
                              }`
                           }
                         >
+                          <sub.icon size={16} className="mr-2" />
                           {sub.label}
                         </NavLink>
                       ))}

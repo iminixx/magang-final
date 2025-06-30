@@ -12,6 +12,7 @@ import HistoryPage from "./pages/HistoryPage";
 import ManageSiswaPage from "./pages/ManageSiswaPage";
 import PeminjamanLainnyaPage from "./pages/ManagePeminjamanLainnya";
 import PengembalianPage from "./pages/ReturnPage";
+import OverduePage from "./pages/OverduePage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -167,6 +168,18 @@ function App() {
           isAuthenticated ? (
             <Layout>
               <PengembalianPage />
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/overdue"
+        element={
+          isAuthenticated ? (
+            <Layout>
+              <OverduePage />
             </Layout>
           ) : (
             <Navigate to="/login" replace />

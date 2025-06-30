@@ -16,7 +16,9 @@ const getDashboardSummary = async (req, res) => {
         (l) => l.barang && l.barang.jurusan === jurusan
       );
 
-      const totalDipinjam = loansJur.filter((l) => !l.tglKembali).length;
+      const totalDipinjam = loansJur.filter(
+        (l) => !l.tglKembali && l.status === "disetujui"
+      ).length;
       const totalDikembalikan = loansJur.filter((l) => l.tglKembali).length;
 
       // Hitung total rusak dan hilang dari dua tipe barang

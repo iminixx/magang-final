@@ -333,9 +333,6 @@ const BarangManagement = () => {
                   </a>
                   <span className="mx-1">/</span>
                 </li>
-                <li className="text-gray-800 font-semibold">
-                  Manajemen Barang
-                </li>
               </ul>
             </nav>
             <h1 className="text-3xl font-bold text-gray-800">

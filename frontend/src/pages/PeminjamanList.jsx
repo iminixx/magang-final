@@ -65,7 +65,22 @@ export default function PeminjamanList() {
     <div className="flex-1 flex flex-col min-w-0">
       <main className="p-8 flex-1 overflow-auto min-w-0">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
+          {/* Breadcrumb */}
+          <nav className="text-sm text-gray-600 mb-2">
+            <ul className="inline-flex space-x-2">
+              <li>
+                <a
+                  href="/"
+                  className="hover:text-gray-900 transition duration-200"
+                >
+                  Home
+                </a>
+                <span className="mx-1">/</span>
+              </li>
+              <li className="text-gray-800 font-semibold">Manage Peminjaman</li>
+            </ul>
+          </nav>
+          <h1 className="text-3xl font-bold text-gray-800">
             Status Peminjaman
           </h1>
         </div>

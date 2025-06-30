@@ -332,9 +332,7 @@ const HistoryPage = () => {
                   </a>
                   <span className="mx-1">/</span>
                 </li>
-                <li className="text-gray-800 font-semibold">
-                  History Peminjaman
-                </li>
+                <li className="text-gray-800 font-semibold">Laporan</li>
               </ul>
             </nav>
             <h1 className="text-3xl font-bold text-gray-800">

@@ -75,11 +75,27 @@ export default function AdminApproval() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
-          <h2 className="text-2xl font-bold mb-4">Approval Peminjaman</h2>
-          <div className="flex gap-4 mb-4">
+    <div className="flex-1 flex flex-col min-w-0">
+      <main className="p-8 flex-1 overflow-auto min-w-0">
+        <div className="mb-6">
+          <nav className="text-sm text-gray-600 mb-2">
+            <ul className="inline-flex space-x-2">
+              <li>
+                <a href="/" className="hover:text-gray-900">
+                  Home
+                </a>
+                <span className="mx-1">/</span>
+              </li>
+              <li className="text-gray-800 font-semibold">Approval</li>
+            </ul>
+          </nav>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Approval Peminjaman
+          </h1>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <SearchInput
               value={searchTerm}
               onChange={(e) => {
@@ -87,14 +103,17 @@ export default function AdminApproval() {
                 setCurrentPage(1);
               }}
               placeholder="Cari nama peminjam..."
-              className="flex-1"
+              className="flex-1 max-w-md"
             />
           </div>
-          <div className="overflow-x-auto">
+
+          <div className="w-full max-w-full overflow-x-auto min-w-0">
             {loading ? (
-              <p className="p-6">Memuat data...</p>
+              <p className="p-6 text-gray-600">Memuat data...</p>
             ) : pendingLoans.length === 0 ? (
-              <p className="p-6">Tidak ada permintaan peminjaman pending.</p>
+              <p className="text-gray-600">
+                Tidak ada permintaan peminjaman pending.
+              </p>
             ) : (
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -157,13 +176,16 @@ export default function AdminApproval() {
               </table>
             )}
           </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -164,12 +164,12 @@ export default function PeminjamanLainnyaPage() {
                   <span className="mx-1">/</span>
                 </li>
                 <li className="text-gray-800 font-semibold">
-                  Peminjaman Lainnya
+                  Manage Peminjaman
                 </li>
               </ul>
             </nav>
             <h1 className="text-3xl font-bold text-gray-800">
-              Peminjaman Lainnya
+              Daftar Peminjaman Lainnya
             </h1>
           </div>
 

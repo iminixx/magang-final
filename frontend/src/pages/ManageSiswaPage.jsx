@@ -191,7 +191,6 @@ const ManageSiswaPage = () => {
                   </a>
                   <span className="mx-1">/</span>
                 </li>
-                <li className="text-gray-800 font-semibold">Manajemen Siswa</li>
               </ul>
             </nav>
             <h1 className="text-3xl font-bold text-gray-800">
@@ -230,7 +229,7 @@ const ManageSiswaPage = () => {
 
                 <button
                   onClick={() => fileInputRef.current.click()}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors cursor-pointer"
                 >
                   <Upload className="w-4 h-4" /> Import CSV
                 </button>

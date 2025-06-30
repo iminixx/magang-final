@@ -1,12 +1,12 @@
-// src/pages/ReturnPage.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import usePeminjaman from "../components/UsePeminjaman";
 import SearchInput from "../components/SearchInput";
 import JurusanFilter from "../components/JurusanFilter";
 import Pagination from "../components/Pagination";
 import Modal from "../components/Modal";
 import PeminjamanTable from "../components/PeminjamanTable";
-
+import { Bell } from "lucide-react";
 const API_LOAN = "http://localhost:5000/api/peminjaman";
 
 export default function ReturnPage() {
@@ -90,6 +90,24 @@ export default function ReturnPage() {
     }
   };
 
+  const navigate = useNavigate();
+
+  const today = new Date();
+  const overdueCount = data.filter((item) => {
+    if (
+      item.status !== "approved" ||
+      item.rentalStatus !== "pinjam" ||
+      !item.tglPinjam ||
+      !item.barang?.maxDurasiPinjam
+    )
+      return false;
+
+    const tglPinjam = new Date(item.tglPinjam);
+    const batas = new Date(tglPinjam);
+    batas.setDate(batas.getDate() + item.barang.maxDurasiPinjam);
+    return today > batas;
+  }).length;
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <main className="p-8 flex-1 overflow-auto min-w-0">
@@ -102,14 +120,10 @@ export default function ReturnPage() {
                 </a>
                 <span className="mx-1">/</span>
               </li>
-              <li className="text-gray-800 font-semibold">
-                Validasi Pengembalian
-              </li>
+              <li className="text-gray-800 font-semibold">Manage Peminjaman</li>
             </ul>
           </nav>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Validasi Pengembalian Barang
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-800">Pengembalian</h1>
         </div>
 
         <div className="bg-white rounded-3xl shadow-lg p-6">
@@ -126,6 +140,13 @@ export default function ReturnPage() {
               placeholder="Filter jurusan barang"
               className="max-w-xs"
             />
+            <button
+              onClick={() => navigate("/overdue")}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <Bell className="w-4 h-4" />
+              {overdueCount > 0 ? `Overdue (${overdueCount})` : "Overdue"}
+            </button>
           </div>
 
           <div className="w-full max-w-full overflow-x-auto min-w-0">
