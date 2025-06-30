@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Download, Filter } from "lucide-react";
+import { Plus, Download, Filter, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Papa from "papaparse";
 
 import Sidebar from "../components/Sidebar";
 import SearchInput from "../components/SearchInput";
@@ -262,6 +263,51 @@ const BarangManagement = () => {
     }
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          results.data = results.data.map((row) => {
+            if (row.tipe === "tidak_habis_pakai" && row.units) {
+              row.units = row.units
+                .split(";")
+                .map((u) => u.trim())
+                .filter(Boolean)
+                .join(";");
+            }
+            return row;
+          });
+
+          const response = await fetch(`${API_BASE_URL}/import`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ data: results.data }),
+          });
+
+          const res = await response.json();
+
+          if (response.ok) {
+            alert("Data berhasil diimport");
+            fetchItems(); // refresh table
+          } else {
+            alert(res.message || "Gagal mengimpor data");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Terjadi kesalahan saat import");
+        }
+      },
+    });
+    e.target.value = null;
+  };
+
   const resetFilters = () => {
     setSelectedJurusan("");
     setSelectedStatus("");
@@ -325,6 +371,22 @@ const BarangManagement = () => {
                       </span>
                     )}
                   </button>
+
+                  <input
+                    type="file"
+                    accept=".csv"
+                    id="importFile"
+                    onChange={handleImport}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="importFile"
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import CSV
+                  </label>
+
                   <button
                     onClick={handleExport}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

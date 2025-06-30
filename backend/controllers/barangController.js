@@ -278,6 +278,74 @@ const postNextKodeUnit = async (req, res) => {
   }
 };
 
+const importBarangCSV = async (req, res) => {
+  try {
+    const rawData = req.body.data;
+
+    if (!Array.isArray(rawData)) {
+      return res.status(400).json({ message: "Data harus berupa array" });
+    }
+
+    const parsedData = rawData.map((item) => {
+      const base = {
+        nama: item.nama?.trim(),
+        jurusan: item.jurusan,
+        tipe: item.tipe,
+        deskripsi: item.deskripsi?.trim() || "",
+      };
+
+      if (item.tipe === "habis_pakai") {
+        base.stok = parseInt(item.stok || "0");
+        base.status = item.status || "tersedia";
+      } else if (item.tipe === "tidak_habis_pakai") {
+        if (!item.units) {
+          throw new Error(`Kolom 'units' kosong untuk ${item.nama}`);
+        }
+
+        let units;
+        try {
+          units = item.units
+            .split(";")
+            .map((u) => JSON.parse(u.trim()))
+            .map((u) => ({
+              kode: u.kode?.trim(),
+              status: u.status || "tersedia",
+            }));
+
+          // Validasi: semua unit harus punya kode unik
+          const kodeSet = new Set();
+          for (const u of units) {
+            if (!u.kode) {
+              throw new Error(`Unit tanpa 'kode' ditemukan di ${item.nama}`);
+            }
+            if (kodeSet.has(u.kode)) {
+              throw new Error(`Kode unit duplikat '${u.kode}' di ${item.nama}`);
+            }
+            kodeSet.add(u.kode);
+          }
+        } catch (err) {
+          throw new Error(
+            `Gagal parsing units untuk ${item.nama}: ${err.message}`
+          );
+        }
+
+        base.units = units;
+        base.maxDurasiPinjam = parseInt(item.maxDurasiPinjam || "1");
+      }
+
+      return base;
+    });
+
+    const inserted = await Barang.insertMany(parsedData);
+    res.json({
+      message: `Import berhasil: ${inserted.length} data ditambahkan`,
+    });
+  } catch (error) {
+    console.error("Import error:", error);
+    res.status(500).json({ message: error.message || "Gagal mengimpor data" });
+  }
+};
+
 module.exports = {
   getAllBarang,
   addBarang,
@@ -286,4 +354,5 @@ module.exports = {
   searchBarang,
   getNextKodeUnit,
   postNextKodeUnit,
+  importBarangCSV,
 };

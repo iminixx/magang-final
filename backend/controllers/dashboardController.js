@@ -8,21 +8,33 @@ const getDashboardSummary = async (req, res) => {
     const allLoans = await Peminjaman.find().populate("barang");
 
     const summaryByJurusan = {};
+
     for (const jurusan of jurusanList) {
       const totalBarang = await Barang.countDocuments({ jurusan });
+
       const loansJur = allLoans.filter(
         (l) => l.barang && l.barang.jurusan === jurusan
       );
+
       const totalDipinjam = loansJur.filter((l) => !l.tglKembali).length;
       const totalDikembalikan = loansJur.filter((l) => l.tglKembali).length;
-      const totalRusak = await Barang.countDocuments({
-        jurusan,
-        status: "rusak",
-      });
-      const totalHilang = await Barang.countDocuments({
-        jurusan,
-        status: "hilang",
-      });
+
+      // Hitung total rusak dan hilang dari dua tipe barang
+      const barangRusakHilang = await Barang.find({ jurusan });
+
+      let totalRusak = 0;
+      let totalHilang = 0;
+
+      for (const b of barangRusakHilang) {
+        if (b.tipe === "habis_pakai") {
+          if (b.status === "rusak") totalRusak++;
+          if (b.status === "hilang") totalHilang++;
+        } else if (b.tipe === "tidak_habis_pakai" && Array.isArray(b.units)) {
+          totalRusak += b.units.filter((u) => u.status === "rusak").length;
+          totalHilang += b.units.filter((u) => u.status === "hilang").length;
+        }
+      }
+
       const totalTransaksi = loansJur.length;
 
       summaryByJurusan[jurusan] = {
@@ -50,7 +62,6 @@ const getDashboardSummary = async (req, res) => {
     const dates = [];
     for (let i = 14; i >= 0; i--) {
       const temp = new Date();
-
       temp.setDate(temp.getDate() - i);
       const dateStr = temp.toLocaleDateString("en-CA", {
         timeZone: "Asia/Jakarta",

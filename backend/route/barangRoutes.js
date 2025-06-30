@@ -3,19 +3,6 @@ const router = express.Router();
 const barangController = require("../controllers/barangController");
 const { body, validationResult } = require("express-validator");
 
-/**
- * Middleware validasi untuk Barang:
- * - nama: wajib tidak kosong
- * - jurusan: wajib diisi, harus salah satu ["RPL","DKV","TKJ"]
- * - tipe: wajib diisi, harus salah satu ["habis_pakai","tidak_habis_pakai"]
- * - Jika tipe = "habis_pakai":
- *    • stok: wajib integer ≥ 0
- *    • status: wajib salah satu ["tersedia","rusak","hilang"]
- * - Jika tipe = "tidak_habis_pakai":
- *    • units: wajib array non-kosong, setiap elemen { kode:String, status:String } (validasi minimal di controller)
- * - maxDurasiPinjam: jika diisi, harus integer ≥ 1
- * - deskripsi: optional, jika diisi bebas
- */
 const validateBarang = [
   body("nama").notEmpty().withMessage("Nama barang wajib diisi"),
   body("jurusan")
@@ -84,5 +71,6 @@ router.post("/", validateBarang, barangController.addBarang);
 router.put("/:id", validateBarang, barangController.updateBarang);
 router.delete("/:id", barangController.deleteBarang);
 router.get("/nextKode", barangController.getNextKodeUnit);
+router.post("/import", barangController.importBarangCSV);
 
 module.exports = router;

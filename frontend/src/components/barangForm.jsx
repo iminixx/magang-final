@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Save, Plus, Trash2 } from "lucide-react";
 import FormField from "../components/FormField";
 
@@ -34,56 +34,11 @@ export default function BarangForm({
     { value: "hilang", label: "Hilang" },
   ];
 
-  const [loadingKode, setLoadingKode] = useState(false);
-  const [nextPreviewSeq, setNextPreviewSeq] = useState(null);
-
-  // Reset preview when nama or jurusan changes
-  useEffect(() => {
-    setNextPreviewSeq(null);
-  }, [formData.nama, formData.jurusan]);
-
-  const handleAddUnit = async () => {
-    if (!formData.nama.trim() || !formData.jurusan) {
-      alert("Isi Nama Barang dan Jurusan terlebih dulu untuk preview kode.");
-      return;
-    }
-    setLoadingKode(true);
-    try {
-      const abrev = formData.nama
-        .trim()
-        .replace(/\s+/g, "-")
-        .toUpperCase()
-        .slice(0, 3);
-      let seqNum;
-
-      if (nextPreviewSeq === null) {
-        // fetch peek sequence
-        const res = await fetch(
-          `/api/barang/nextKode?jurusan=${encodeURIComponent(
-            formData.jurusan
-          )}&nama=${encodeURIComponent(formData.nama)}`
-        );
-        if (!res.ok) throw new Error("Gagal mengambil preview kode");
-        const { kode } = await res.json();
-        seqNum = parseInt(kode.split("-").pop(), 10);
-      } else {
-        seqNum = nextPreviewSeq;
-      }
-
-      const strSeq = String(seqNum).padStart(3, "000");
-      const kodeFull = `${formData.jurusan}-${abrev}-${strSeq}`;
-
-      setFormData((prev) => ({
-        ...prev,
-        units: [...(prev.units || []), { kode: kodeFull, status: "tersedia" }],
-      }));
-      setNextPreviewSeq(seqNum + 1);
-    } catch (err) {
-      console.error("handleAddUnit:", err);
-      alert(err.message);
-    } finally {
-      setLoadingKode(false);
-    }
+  const handleAddUnit = () => {
+    setFormData((prev) => ({
+      ...prev,
+      units: [...(prev.units || []), { kode: "", status: "tersedia" }],
+    }));
   };
 
   const handleUnitChange = (index, field, value) => {
@@ -244,7 +199,9 @@ export default function BarangForm({
                     <input
                       type="text"
                       value={u.kode}
-                      readOnly
+                      onChange={(e) =>
+                        handleUnitChange(idx, "kode", e.target.value)
+                      }
                       className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -276,15 +233,10 @@ export default function BarangForm({
               <button
                 type="button"
                 onClick={handleAddUnit}
-                disabled={loadingKode}
-                className={`flex items-center gap-2 px-3 py-1 rounded ${
-                  loadingKode
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
+                className="flex items-center gap-2 px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4" />
-                {loadingKode ? "Mengambil Preview…" : "Tambah Unit"}
+                Tambah Unit
               </button>
             </div>
           </FormField>
