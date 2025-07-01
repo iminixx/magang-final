@@ -111,7 +111,6 @@ export default function PeminjamanLainnyaForm({
           />
         </div>
 
-        {/* Barang selection, jumlah/unit, keterangan sama seperti siswa form */}
         <div>
           <label className="block text-sm font-medium">Barang</label>
           <select

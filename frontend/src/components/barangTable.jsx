@@ -43,7 +43,7 @@ const BarangTable = ({ data, onEdit, onDelete, onInfo }) => {
             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Info
             </th>
-            {/* ★ NEW: kolom Info */}
+
             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Aksi
             </th>
@@ -52,17 +52,9 @@ const BarangTable = ({ data, onEdit, onDelete, onInfo }) => {
         <tbody className="bg-white divide-y divide-gray-200">
           {data.map((item) => (
             <tr key={item._id} className="hover:bg-gray-50">
-              {/* ★ UBAH – Nama dengan ikon Info di samping */}
               <td className="px-6 py-4 text-sm text-gray-900 text-center">
                 <div className="flex items-center justify-center space-x-2">
                   <span>{item.nama || "-"}</span>
-                  <button
-                    onClick={() => onInfo(item)}
-                    title="Lihat deskripsi"
-                    className="p-1 rounded hover:bg-gray-100"
-                  >
-                    <InfoIcon className="w-4 h-4 text-gray-600" />
-                  </button>
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -88,9 +80,15 @@ const BarangTable = ({ data, onEdit, onDelete, onInfo }) => {
                   {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Badge>
               </td>
-              {/* ★ Kolom Info sudah ditangani */}
+
               <td className="px-6 py-4 whitespace-nowrap text-center">
-                {/* kosong karena ikon di kolom Nama */}
+                <button
+                  onClick={() => onInfo(item)}
+                  title="Lihat deskripsi"
+                  className="p-1 rounded hover:bg-gray-100"
+                >
+                  <InfoIcon className="w-4 h-4 text-gray-600" />
+                </button>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                 <div className="flex justify-center gap-2">

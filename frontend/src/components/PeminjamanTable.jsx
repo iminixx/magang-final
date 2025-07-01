@@ -89,7 +89,6 @@ export default function PeminjamanTable({
         <tbody className="bg-white divide-y divide-gray-200">
           {data.map((rec) => (
             <tr key={rec._id} className="hover:bg-gray-50">
-              {/* Kolom Aksi dipindahkan ke bagian awal */}
               <td className="px-6 py-4 text-center text-sm font-medium">
                 <div className="flex justify-center gap-2">
                   {showReturnButton &&

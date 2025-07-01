@@ -1,4 +1,3 @@
-// src/pages/PeminjamanList.jsx
 import React, { useState } from "react";
 import usePeminjaman from "../components/UsePeminjaman";
 import PeminjamanTable from "../components/PeminjamanTable";
@@ -65,7 +64,6 @@ export default function PeminjamanList() {
     <div className="flex-1 flex flex-col min-w-0">
       <main className="p-8 flex-1 overflow-auto min-w-0">
         <div className="mb-6">
-          {/* Breadcrumb */}
           <nav className="text-sm text-gray-600 mb-2">
             <ul className="inline-flex space-x-2">
               <li>
@@ -105,7 +103,6 @@ export default function PeminjamanList() {
             <p className="text-gray-600">Memuat data...</p>
           ) : (
             <>
-              {/* Pending */}
               {pendingData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mb-2 text-yellow-600">
@@ -120,7 +117,6 @@ export default function PeminjamanList() {
                 </>
               )}
 
-              {/* Approved */}
               {approvedData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mt-8 mb-2 text-green-600">
@@ -135,7 +131,6 @@ export default function PeminjamanList() {
                 </>
               )}
 
-              {/* Rejected */}
               {rejectedData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mt-8 mb-2 text-red-600">

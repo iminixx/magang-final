@@ -97,7 +97,6 @@ function App() {
         }
       />
 
-      {/* 2. Halaman untuk melihat daftar peminjaman (PeminjamanList) */}
       <Route
         path="/peminjaman/list" // **TAMBAHAN**
         element={
@@ -110,8 +109,6 @@ function App() {
           )
         }
       />
-
-      {/* =================================================== */}
 
       <Route
         path="/approval"

@@ -145,7 +145,6 @@ export default function DashboardPage() {
     <div className="flex">
       <div className="flex-1 flex flex-col">
         <main className="p-8 flex-1 overflow-auto">
-          {/* Breadcrumb */}
           <div className="mb-8">
             <nav className="text-sm text-gray-600 mb-2">
               <ul className="inline-flex space-x-2">
@@ -164,7 +163,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6 mb-8">
-            {/* Barang & Transaksi */}
             <div className="w-full lg:w-1/3 bg-white rounded-3xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Barang & Transaksi
@@ -176,7 +174,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Aktivitas & Status */}
             <div className="w-full lg:w-2/3 bg-white rounded-3xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Aktivitas & Status
@@ -189,7 +186,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Statistik Jurusan */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Statistik Jurusan
@@ -201,7 +197,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Chart Bar */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Aktivitas Inventaris per Jurusan
@@ -226,7 +221,6 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
 
-          {/* Chart Line */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Peminjaman per Hari (15 Hari Terakhir) per Jurusan
@@ -273,7 +267,6 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
 
-          {/* Transaksi Terbaru */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Transaksi Terbaru

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import SearchInput from "../components/SearchInput";
 import JurusanFilter from "../components/JurusanFilter";
-import Pagination from "../components/Pagination";
 
 const API_URL = "http://localhost:5000/api/peminjaman";
 
@@ -109,18 +108,28 @@ export default function OverduePage() {
                 <thead>
                   <tr className="text-left bg-gray-100">
                     <th className="p-3">Nama</th>
+                    <th className="p-3">Tipe</th>
+                    <th className="p-3">Jurusan/Asal</th>
+                    <th className="p-3">No. HP</th>
                     <th className="p-3">Barang</th>
                     <th className="p-3">Tgl Pinjam</th>
                     <th className="p-3">Batas Kembali</th>
                     <th className="p-3">Terlambat</th>
+                    <th className="p-3">Keterangan</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((item, idx) => {
                     const nama =
                       item.peminjamType === "siswa"
-                        ? item.peminjamSiswa?.nama || ""
-                        : item.peminjamNama || "";
+                        ? item.peminjamSiswa?.nama || "-"
+                        : item.peminjamNama || "-";
+                    const asal =
+                      item.peminjamType === "siswa"
+                        ? item.peminjamSiswa?.jurusan || "-"
+                        : item.peminjamAsal || "-";
+                    const tipe = item.peminjamType;
+                    const barang = item.barang?.nama || "-";
                     const tgl = new Date(item.tglPinjam);
                     const batas = new Date(tgl);
                     batas.setDate(
@@ -133,12 +142,16 @@ export default function OverduePage() {
                     return (
                       <tr key={idx} className="border-t">
                         <td className="p-3">{nama}</td>
-                        <td className="p-3">{item.barang?.nama || "-"}</td>
+                        <td className="p-3 capitalize">{tipe}</td>
+                        <td className="p-3">{asal}</td>
+                        <td className="p-3">{item.peminjamPhone || "-"}</td>
+                        <td className="p-3">{barang}</td>
                         <td className="p-3">{tgl.toLocaleDateString()}</td>
                         <td className="p-3">{batas.toLocaleDateString()}</td>
                         <td className="p-3 text-red-600 font-bold">
                           {overdue} hari
                         </td>
+                        <td className="p-3">{item.keterangan || "-"}</td>
                       </tr>
                     );
                   })}

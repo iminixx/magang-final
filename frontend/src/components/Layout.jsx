@@ -33,7 +33,6 @@ export default function Layout({ children }) {
           tapi kita hapus overflow-hidden di sini:
         */}
         <div className="flex flex-1 flex-col min-w-0">
-          {/* header (mobile only) */}
           <Header />
 
           {/* 

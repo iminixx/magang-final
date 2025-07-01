@@ -1,3 +1,4 @@
+// src/pages/ReturnPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import usePeminjaman from "../components/UsePeminjaman";
@@ -7,6 +8,7 @@ import Pagination from "../components/Pagination";
 import Modal from "../components/Modal";
 import PeminjamanTable from "../components/PeminjamanTable";
 import { Bell } from "lucide-react";
+
 const API_LOAN = "http://localhost:5000/api/peminjaman";
 
 export default function ReturnPage() {
@@ -16,7 +18,6 @@ export default function ReturnPage() {
     searchTerm,
     handleSearch,
     currentPage,
-    totalPages,
     setCurrentPage,
     fetchData,
   } = usePeminjaman(API_LOAN);
@@ -25,6 +26,7 @@ export default function ReturnPage() {
   const [selected, setSelected] = useState(null);
   const [kondisiBarang, setKondisiBarang] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   // Filter hanya yang approved dan masih pinjam
   const filtered = data
@@ -43,7 +45,30 @@ export default function ReturnPage() {
       );
     });
 
-  // Saat tombol kembalikan ditekan
+  // Pagination berbasis filtered result
+  const ITEMS_PER_PAGE = 10;
+  const totalFilteredPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedData = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Hitung overdue
+  const today = new Date();
+  const overdueCount = data.filter((item) => {
+    if (
+      item.status !== "approved" ||
+      item.rentalStatus !== "pinjam" ||
+      !item.tglPinjam ||
+      !item.barang?.maxDurasiPinjam
+    )
+      return false;
+    const tglPinjam = new Date(item.tglPinjam);
+    const batas = new Date(tglPinjam);
+    batas.setDate(batas.getDate() + item.barang.maxDurasiPinjam);
+    return today > batas;
+  }).length;
+
   const handleReturnClick = (id) => {
     const item = filtered.find((d) => d._id === id);
     if (item) {
@@ -61,15 +86,14 @@ export default function ReturnPage() {
 
     const isConsumable = selected.isConsumable;
 
-    // ini format payload-nya
     const payload = isConsumable
-      ? { kondisi: kondisiBarang } // untuk habis pakai
+      ? { kondisi: kondisiBarang }
       : {
           unitReturns: selected.unitKodes.map((kode) => ({
             kode,
             kondisi: kondisiBarang,
           })),
-        }; // untuk tidak habis pakai
+        };
 
     try {
       const res = await fetch(`${API_LOAN}/${selected._id}/return`, {
@@ -89,24 +113,6 @@ export default function ReturnPage() {
       alert(err.message);
     }
   };
-
-  const navigate = useNavigate();
-
-  const today = new Date();
-  const overdueCount = data.filter((item) => {
-    if (
-      item.status !== "approved" ||
-      item.rentalStatus !== "pinjam" ||
-      !item.tglPinjam ||
-      !item.barang?.maxDurasiPinjam
-    )
-      return false;
-
-    const tglPinjam = new Date(item.tglPinjam);
-    const batas = new Date(tglPinjam);
-    batas.setDate(batas.getDate() + item.barang.maxDurasiPinjam);
-    return today > batas;
-  }).length;
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
@@ -152,17 +158,17 @@ export default function ReturnPage() {
           <div className="w-full max-w-full overflow-x-auto min-w-0">
             {loading ? (
               <p className="p-6 text-gray-600">Memuat data...</p>
-            ) : filtered.length === 0 ? (
+            ) : paginatedData.length === 0 ? (
               <p className="text-gray-600">
                 Tidak ada barang yang sedang dipinjam.
               </p>
             ) : (
               <PeminjamanTable
-                data={filtered}
+                data={paginatedData}
                 onReturn={handleReturnClick}
                 onDelete={() => {}}
                 userRole="admin"
-                showReturnButton={true} // pastikan ini disupport di PeminjamanTable.jsx
+                showReturnButton={true}
               />
             )}
           </div>
@@ -170,7 +176,7 @@ export default function ReturnPage() {
           <div className="mt-6">
             <Pagination
               currentPage={currentPage}
-              totalPages={totalPages}
+              totalPages={totalFilteredPages}
               onPageChange={setCurrentPage}
             />
           </div>

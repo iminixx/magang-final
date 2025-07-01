@@ -1,3 +1,4 @@
+// src/pages/HistoryPage.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { Filter, Download } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -5,164 +6,9 @@ import Pagination from "../components/Pagination";
 import { fetchPeminjamanHistory } from "../api/reportApi";
 import { downloadCSV } from "../components/CSV";
 import JurusanFilter from "../components/JurusanFilter";
+import Badge from "../components/Badge";
 
-const Table = ({ data, columns, loading, emptyMessage }) => {
-  if (loading) return <LoadingSpinner message="Memuat data..." />;
-  if (!data.length) return <p className="text-center p-4">{emptyMessage}</p>;
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            {columns.map((c) => (
-              <th
-                key={c.key}
-                className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                {c.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {data.map((row) => (
-            <tr key={row._id} className="hover:bg-gray-50">
-              {columns.map((c) => (
-                <td
-                  key={`${row._id}-${c.key}`}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center"
-                >
-                  {c.render ? c.render(row) : row[c.key] || "-"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-const FilterSection = ({
-  title,
-  showFilters,
-  setShowFilters,
-  activeFiltersCount,
-  filters,
-  setFilters,
-  onReset,
-  children,
-}) => (
-  <div>
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-      <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
-      <div className="flex gap-2">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border ${
-            showFilters || activeFiltersCount > 0
-              ? "bg-blue-100 text-blue-700 border-blue-300"
-              : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          Filter
-          {activeFiltersCount > 0 && (
-            <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-1 ml-1">
-              {activeFiltersCount}
-            </span>
-          )}
-        </button>
-        {children}
-      </div>
-    </div>
-
-    {showFilters && (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-3xl border mb-4">
-        {filters.map((f) => (
-          <div key={f.key} className="flex-1 max-w-xs">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {f.label}
-            </label>
-            {f.custom ? (
-              f.custom
-            ) : f.type === "text" ? (
-              <input
-                type="text"
-                placeholder={f.placeholder}
-                className="border rounded-3xl px-3 py-2 w-full"
-                value={f.value}
-                onChange={(e) =>
-                  setFilters((p) => ({ ...p, [f.key]: e.target.value }))
-                }
-              />
-            ) : f.type === "date" ? (
-              <input
-                type="date"
-                className="border rounded-3xl px-3 py-2 w-full"
-                value={f.value}
-                onChange={(e) =>
-                  setFilters((p) => ({ ...p, [f.key]: e.target.value }))
-                }
-              />
-            ) : (
-              f.type === "select" && (
-                <select
-                  className="border rounded-3xl px-3 py-2 w-full"
-                  value={f.value}
-                  onChange={(e) =>
-                    setFilters((p) => ({ ...p, [f.key]: e.target.value }))
-                  }
-                >
-                  {f.options.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              )
-            )}
-          </div>
-        ))}
-        {activeFiltersCount > 0 && (
-          <div className="flex items-end">
-            <button
-              onClick={onReset}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-3xl hover:bg-gray-100"
-            >
-              Reset Filter
-            </button>
-          </div>
-        )}
-      </div>
-    )}
-
-    {activeFiltersCount > 0 && (
-      <div className="flex flex-wrap gap-2 mb-4">
-        <span className="text-sm text-gray-600">Filter aktif:</span>
-        {filters.map(
-          (f) =>
-            f.value && (
-              <span
-                key={f.key}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-              >
-                {f.label}: {f.value}
-                <button
-                  onClick={() => setFilters((p) => ({ ...p, [f.key]: "" }))}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            )
-        )}
-      </div>
-    )}
-  </div>
-);
-
+// HOOK: Langsung didefinisikan agar tidak error
 const useFetchData = (fetchFunction, initialFilters) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -208,6 +54,19 @@ const useFetchData = (fetchFunction, initialFilters) => {
   };
 };
 
+const getStatusVariant = (status) => {
+  switch (status) {
+    case "pending":
+      return "warning";
+    case "approved":
+      return "success";
+    case "rejected":
+      return "danger";
+    default:
+      return "default";
+  }
+};
+
 const HistoryPage = () => {
   const initialHistFilters = {
     startDate: "",
@@ -251,7 +110,7 @@ const HistoryPage = () => {
       label: "Asal",
       render: (h) =>
         h.peminjamType === "siswa"
-          ? h.peminjamSiswa?.kelas || "-"
+          ? `${h.peminjamSiswa?.jurusan || ""} ${h.peminjamSiswa?.kelas || ""}`
           : h.peminjamAsal || "-",
     },
     {
@@ -274,7 +133,41 @@ const HistoryPage = () => {
           ? h.unitKodes.join(", ")
           : "-",
     },
-    { key: "status", label: "Status", render: (h) => h.status },
+    {
+      key: "statusSaatPinjam",
+      label: "Kondisi Saat Pinjam",
+      render: (h) => {
+        if (h.unitStatus && h.unitStatus.length > 0) {
+          const s = h.unitStatus.map((u) =>
+            u.statusSaatPinjam === "tersedia" ? "baik" : u.statusSaatPinjam
+          );
+          return s.join(", ");
+        }
+        return "-";
+      },
+    },
+    {
+      key: "statusSetelahKembali",
+      label: "Kondisi Setelah Kembali",
+      render: (h) => {
+        if (h.unitStatus && h.unitStatus.length > 0) {
+          const s = h.unitStatus.map((u) =>
+            u.statusSetelahKembali === "tersedia"
+              ? "baik"
+              : u.statusSetelahKembali
+          );
+          return s.join(", ");
+        }
+        return "-";
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (h) => (
+        <Badge variant={getStatusVariant(h.status)}>{h.status}</Badge>
+      ),
+    },
     {
       key: "tglKembali",
       label: "Tgl Kembali",
@@ -291,6 +184,8 @@ const HistoryPage = () => {
       "No. Telepon",
       "Barang",
       "Jumlah/Unit",
+      "Status Saat Pinjam",
+      "Status Setelah Kembali",
       "Status",
       "Tgl Kembali",
     ];
@@ -301,7 +196,7 @@ const HistoryPage = () => {
         ? h.peminjamSiswa?.nama || ""
         : h.peminjamNama || "",
       h.peminjamType === "siswa"
-        ? h.peminjamSiswa?.kelas || ""
+        ? `${h.peminjamSiswa?.jurusan || ""} ${h.peminjamSiswa?.kelas || ""}`
         : h.peminjamAsal || "",
       h.peminjamPhone || "",
       h.barang?.nama || "",
@@ -310,6 +205,18 @@ const HistoryPage = () => {
         : Array.isArray(h.unitKodes) && h.unitKodes.length
         ? h.unitKodes.join(", ")
         : "",
+      h.unitStatus
+        ?.map((u) =>
+          u.statusSaatPinjam === "tersedia" ? "baik" : u.statusSaatPinjam
+        )
+        .join(", ") || "",
+      h.unitStatus
+        ?.map((u) =>
+          u.statusSetelahKembali === "tersedia"
+            ? "baik"
+            : u.statusSetelahKembali
+        )
+        .join(", ") || "",
       h.status,
       h.tglKembali ? new Date(h.tglKembali).toLocaleDateString("id-ID") : "",
     ]);
@@ -320,33 +227,56 @@ const HistoryPage = () => {
   };
 
   return (
-    <div className="flex">
-      <div className="flex-1 flex flex-col">
-        <main className="p-8 flex-1 overflow-auto">
-          <div className="mb-8">
-            <nav className="text-sm text-gray-600 mb-2">
-              <ul className="inline-flex space-x-2">
-                <li>
-                  <a href="/" className="hover:text-gray-900">
-                    Home
-                  </a>
-                  <span className="mx-1">/</span>
-                </li>
-                <li className="text-gray-800 font-semibold">Laporan</li>
-              </ul>
-            </nav>
-            <h1 className="text-3xl font-bold text-gray-800">
-              History Peminjaman
-            </h1>
+    <div className="flex-1 flex flex-col min-w-0">
+      <main className="p-8 flex-1 overflow-auto min-w-0">
+        <div className="mb-6">
+          <nav className="text-sm text-gray-600 mb-2">
+            <ul className="inline-flex space-x-2">
+              <li>
+                <a href="/" className="hover:text-gray-900 transition">
+                  Home
+                </a>
+                <span className="mx-1">/</span>
+              </li>
+              <li className="text-gray-800 font-semibold">Laporan</li>
+            </ul>
+          </nav>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Riwayat Peminjaman
+          </h1>
+        </div>
+
+        <section className="bg-white rounded-3xl shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+            <button
+              onClick={() => setShowFiltHist((prev) => !prev)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                showFiltHist || activeHist > 0
+                  ? "bg-blue-100 text-blue-700 border-blue-300"
+                  : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              Filter
+              {activeHist > 0 && (
+                <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                  {activeHist}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={exportHist}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
           </div>
 
-          <section className="bg-white rounded-3xl shadow-lg p-6 mb-8">
-            <FilterSection
-              title="History Peminjaman"
-              showFilters={showFiltHist}
-              setShowFilters={setShowFiltHist}
-              activeFiltersCount={activeHist}
-              filters={[
+          {showFiltHist && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-3xl border mb-4">
+              {/* Filter Form */}
+              {[
                 {
                   key: "startDate",
                   label: "Tgl Pinjam Dari",
@@ -375,7 +305,7 @@ const HistoryPage = () => {
                   key: "peminjamNama",
                   label: "Nama Peminjam",
                   type: "text",
-                  placeholder: "Cari by Nama",
+                  placeholder: "Cari Nama",
                   value: histFilters.peminjamNama,
                 },
                 {
@@ -390,53 +320,125 @@ const HistoryPage = () => {
                     { label: "Rejected", value: "rejected" },
                   ],
                 },
-                {
-                  key: "jurusan",
-                  label: "Jurusan",
-                  type: "custom",
-                  value: histFilters.jurusan,
-                  custom: (
-                    <JurusanFilter
-                      selectedJurusan={histFilters.jurusan}
-                      onJurusanChange={(value) =>
-                        setHistFilters((p) => ({ ...p, jurusan: value }))
+              ].map((f) => (
+                <div key={f.key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {f.label}
+                  </label>
+                  {f.type === "date" || f.type === "text" ? (
+                    <input
+                      type={f.type}
+                      placeholder={f.placeholder}
+                      className="border rounded-3xl px-3 py-2 w-full"
+                      value={f.value}
+                      onChange={(e) =>
+                        setHistFilters((p) => ({
+                          ...p,
+                          [f.key]: e.target.value,
+                        }))
                       }
-                      showClearButton
-                      placeholder="Semua jurusan"
                     />
-                  ),
-                },
-              ]}
-              setFilters={setHistFilters}
-              onReset={() => setHistFilters(initialHistFilters)}
-            >
-              <button
-                onClick={exportHist}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <Download className="w-4 h-4" /> Export CSV
-              </button>
-            </FilterSection>
+                  ) : (
+                    f.type === "select" && (
+                      <select
+                        className="border rounded-3xl px-3 py-2 w-full"
+                        value={f.value}
+                        onChange={(e) =>
+                          setHistFilters((p) => ({
+                            ...p,
+                            [f.key]: e.target.value,
+                          }))
+                        }
+                      >
+                        {f.options.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    )
+                  )}
+                </div>
+              ))}
 
-            <Table
-              data={paginatedHist}
-              columns={histCols}
-              loading={loadingHist}
-              emptyMessage="Tidak ada data peminjaman."
-            />
-
-            {histTotal > 1 && (
-              <div className="mt-4 flex justify-center">
-                <Pagination
-                  currentPage={histPage}
-                  totalPages={histTotal}
-                  onPageChange={setHistPage}
+              {/* Jurusan Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Jurusan
+                </label>
+                <JurusanFilter
+                  selectedJurusan={histFilters.jurusan}
+                  onJurusanChange={(val) =>
+                    setHistFilters((p) => ({ ...p, jurusan: val }))
+                  }
+                  showClearButton
+                  placeholder="Semua jurusan"
                 />
               </div>
-            )}
-          </section>
-        </main>
-      </div>
+
+              {/* Reset Filter Button */}
+              {activeHist > 0 && (
+                <div className="flex items-end">
+                  <button
+                    onClick={() => setHistFilters(initialHistFilters)}
+                    className="px-4 py-2 border rounded-3xl text-gray-600 hover:bg-gray-100"
+                  >
+                    Reset Filter
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tabel Riwayat */}
+          {loadingHist ? (
+            <LoadingSpinner message="Memuat data..." />
+          ) : paginatedHist.length === 0 ? (
+            <p className="text-center py-4">Tidak ada data peminjaman.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {histCols.map((col) => (
+                      <th
+                        key={col.key}
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        {col.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedHist.map((row) => (
+                    <tr key={row._id} className="hover:bg-gray-50">
+                      {histCols.map((col) => (
+                        <td
+                          key={`${row._id}-${col.key}`}
+                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center"
+                        >
+                          {col.render ? col.render(row) : row[col.key] || "-"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {histTotal > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination
+                currentPage={histPage}
+                totalPages={histTotal}
+                onPageChange={setHistPage}
+              />
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 };

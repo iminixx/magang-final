@@ -505,9 +505,7 @@ const BarangManagement = () => {
                   {total !== 1 ? "s" : ""})
                 </h2>
                 {hasActiveFilters && (
-                  <div className="text-sm text-gray-600">
-                    {/* your filter summary here - unchanged */}
-                  </div>
+                  <div className="text-sm text-gray-600"></div>
                 )}
               </div>
             </div>

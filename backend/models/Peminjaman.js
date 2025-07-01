@@ -89,6 +89,20 @@ const PeminjamanSchema = new mongoose.Schema(
           "unitKodes harus berisi minimal satu kode unik (array of strings)",
       },
     },
+    unitStatus: [
+      {
+        kode: String,
+        statusSaatPinjam: {
+          type: String,
+          enum: ["tersedia", "rusak", "hilang", "dipinjam"],
+          default: "tersedia",
+        },
+        statusSetelahKembali: {
+          type: String,
+          enum: ["tersedia", "rusak", "hilang"],
+        },
+      },
+    ],
 
     tglPinjam: {
       type: Date,

@@ -29,7 +29,6 @@ const JurusanFilter = ({
         ))}
       </select>
 
-      {/* Clear button */}
       {showClearButton && selectedJurusan && (
         <button
           onClick={handleClear}
@@ -40,7 +39,6 @@ const JurusanFilter = ({
         </button>
       )}
 
-      {/* Dropdown arrow */}
       {(!showClearButton || !selectedJurusan) && (
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
           <svg

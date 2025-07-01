@@ -181,7 +181,6 @@ const ManageSiswaPage = () => {
       {sidebarOpen && <Sidebar isOpen onClose={() => setSidebarOpen(false)} />}
       <div className="flex-1 flex flex-col">
         <main className="p-8 flex-1 overflow-auto">
-          {/* Header */}
           <div className="mb-8">
             <nav className="text-sm text-gray-600 mb-2">
               <ul className="inline-flex space-x-2">
@@ -198,7 +197,6 @@ const ManageSiswaPage = () => {
             </h1>
           </div>
 
-          {/* Filter & Action */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
               <SearchInput
@@ -311,7 +309,6 @@ const ManageSiswaPage = () => {
             </div>
           )}
 
-          {/* Form Modal */}
           <Modal
             isOpen={showForm}
             onClose={() => {
@@ -372,7 +369,6 @@ const ManageSiswaPage = () => {
             </div>
           </Modal>
 
-          {/* Table */}
           <div className="bg-white rounded-3xl shadow-lg overflow-hidden mb-8">
             {loading ? (
               <LoadingSpinner message="Memuat siswa..." />
@@ -390,7 +386,6 @@ const ManageSiswaPage = () => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        {/* ← CHECKBOX “Select All” */}
                         <th className="px-6 py-3">
                           <input
                             type="checkbox"
@@ -429,7 +424,6 @@ const ManageSiswaPage = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {paginated.map((s) => (
                         <tr key={s._id} className="hover:bg-gray-50">
-                          {/* ← CHECKBOX per baris */}
                           <td className="px-6 py-4">
                             <input
                               type="checkbox"

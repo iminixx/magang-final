@@ -126,7 +126,6 @@ export default function PeminjamanSiswaForm({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Peminjaman (Siswa)">
       <div className="space-y-4">
-        {/* Jurusan */}
         <div>
           <label className="block text-sm font-medium">Jurusan</label>
           <select
@@ -146,7 +145,6 @@ export default function PeminjamanSiswaForm({
           </select>
         </div>
 
-        {/* Kelas */}
         {selectedJurusan && (
           <div>
             <label className="block text-sm font-medium">Kelas</label>
@@ -167,7 +165,6 @@ export default function PeminjamanSiswaForm({
           </div>
         )}
 
-        {/* Combobox Nama Siswa */}
         {selectedJurusan && selectedKelas && (
           <div>
             <label className="block text-sm font-medium">Nama Siswa</label>
@@ -197,7 +194,6 @@ export default function PeminjamanSiswaForm({
           </div>
         )}
 
-        {/* PIN */}
         {selectedSiswa && (
           <div>
             <label className="block text-sm font-medium">PIN</label>
@@ -215,18 +211,24 @@ export default function PeminjamanSiswaForm({
           </div>
         )}
 
-        {/* Telepon */}
         <div>
           <label className="block text-sm font-medium">Telepon</label>
           <input
             type="tel"
             className="mt-1 w-full border rounded p-2"
             value={peminjamPhone}
-            onChange={(e) => setPeminjamPhone(e.target.value)}
+            onChange={(e) =>
+              setPeminjamPhone(e.target.value.replace(/\D/g, ""))
+            } // hanya angka
+            placeholder="08xxxxxxxxxx"
           />
+          {!/^08\d{8,10}$/.test(peminjamPhone) && peminjamPhone.length > 0 && (
+            <p className="text-sm text-red-600">
+              Nomor tidak valid. Gunakan format seperti: 081234567890
+            </p>
+          )}
         </div>
 
-        {/* Pilih Barang */}
         <div>
           <label className="block text-sm font-medium">Barang</label>
           <select
@@ -249,7 +251,6 @@ export default function PeminjamanSiswaForm({
           </select>
         </div>
 
-        {/* Jumlah atau Pilih Unit */}
         {selectedBarangObj?.tipe === "habis_pakai" && (
           <div>
             <label className="block text-sm font-medium">Jumlah</label>
@@ -279,7 +280,6 @@ export default function PeminjamanSiswaForm({
           </div>
         )}
 
-        {/* Keterangan */}
         <div>
           <label className="block text-sm font-medium">Keterangan</label>
           <textarea
@@ -290,7 +290,6 @@ export default function PeminjamanSiswaForm({
           />
         </div>
 
-        {/* Aksi */}
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
             Batal

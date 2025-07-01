@@ -47,7 +47,7 @@ exports.getAll = async (req, res) => {
       .limit(parseInt(limit))
       .populate({
         path: "barang",
-        select: "nama tipe jurusan",
+        select: "nama tipe jurusan maxDurasiPinjam",
       })
       .populate({
         path: "peminjamSiswa",
@@ -67,12 +67,6 @@ exports.getAll = async (req, res) => {
   }
 };
 
-/**
- * POST /api/peminjaman
- * Membuat dokumen peminjaman baru (status default: pending,
- * rentalStatus default: 'pinjam' untuk non-consumable,
- * dan langsung 'kembali' untuk consumable supaya tidak ada return).
- */
 exports.create = async (req, res) => {
   try {
     const {
@@ -200,10 +194,6 @@ exports.create = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/peminjaman/approve/:id
- * Approve peminjaman: status → "approved", update stok / unit status di Barang
- */
 exports.approve = async (req, res) => {
   const { id } = req.params;
   try {
@@ -231,6 +221,8 @@ exports.approve = async (req, res) => {
       barang.stok -= loan.jumlah;
       await barang.save();
     } else {
+      const unitStatusArr = [];
+
       for (const kode of loan.unitKodes) {
         const idx = barang.units.findIndex((u) => u.kode === kode);
         if (idx === -1 || barang.units[idx].status !== "tersedia") {
@@ -238,9 +230,17 @@ exports.approve = async (req, res) => {
             .status(400)
             .json({ message: `Unit '${kode}' tidak tersedia` });
         }
+
+        const statusAwal = barang.units[idx].status; // ✅ ambil status sebelum diubah
         barang.units[idx].status = "dipinjam";
+
+        unitStatusArr.push({
+          kode,
+          statusSaatPinjam: statusAwal, // simpan kondisi asli: bisa "tersedia", "rusak", dll
+        });
       }
 
+      loan.unitStatus = unitStatusArr;
       await recalcStokNonConsumable(barang);
     }
 
@@ -289,7 +289,7 @@ exports.reject = async (req, res) => {
  */
 exports.returnItem = async (req, res) => {
   const { id } = req.params;
-  const { kondisiMap, unitReturns } = req.body;
+  const { unitReturns } = req.body;
 
   try {
     const loan = await Peminjaman.findById(id).populate("barang");
@@ -318,28 +318,48 @@ exports.returnItem = async (req, res) => {
         .json({ message: "Barang terkait tidak ditemukan" });
     }
 
+    const newUnitStatus = [];
+
     for (const kode of loan.unitKodes) {
       const idx = barang.units.findIndex((u) => u.kode === kode);
-      if (idx !== -1 && barang.units[idx].status === "dipinjam") {
-        const kondisi = unitReturns?.find((u) => u.kode === kode)?.kondisi;
-        if (!["tersedia", "rusak", "hilang"].includes(kondisi)) {
-          return res
-            .status(400)
-            .json({ message: `Kondisi unit ${kode} tidak valid` });
-        }
-        barang.units[idx].status = kondisi;
+      if (idx === -1 || barang.units[idx].status !== "dipinjam") {
+        return res
+          .status(400)
+          .json({ message: `Unit '${kode}' tidak sedang dipinjam` });
       }
+
+      const kondisi = unitReturns?.find((u) => u.kode === kode)?.kondisi;
+      if (!["tersedia", "rusak", "hilang"].includes(kondisi)) {
+        return res
+          .status(400)
+          .json({ message: `Kondisi unit '${kode}' tidak valid` });
+      }
+
+      // Simpan perubahan
+      barang.units[idx].status = kondisi;
+
+      // Dapatkan status saat dipinjam
+      const prevStatus =
+        loan.unitStatus?.find((u) => u.kode === kode)?.statusSaatPinjam ||
+        "dipinjam";
+
+      newUnitStatus.push({
+        kode,
+        statusSaatPinjam: prevStatus,
+        statusSetelahKembali: kondisi,
+      });
     }
 
     await recalcStokNonConsumable(barang);
 
     loan.rentalStatus = "kembali";
     loan.tglKembali = new Date();
+    loan.unitStatus = newUnitStatus;
     await loan.save();
 
     return res.json({
       data: loan,
-      message: "Barang berhasil dikembalikan dengan kondisi",
+      message: "Barang berhasil dikembalikan dengan status kondisi terbaru.",
     });
   } catch (err) {
     console.error("Error di returnItem Peminjaman:", err);
@@ -386,10 +406,6 @@ exports.delete = async (req, res) => {
   }
 };
 
-/**
- * GET /api/peminjaman/history
- * Mengambil riwayat peminjaman dengan filter tanggal, nama, tipe, dan status.
- */
 exports.getHistory = async (req, res) => {
   try {
     const { startDate, endDate, peminjamNama, peminjamType, status } =

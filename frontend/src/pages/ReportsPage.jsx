@@ -1,5 +1,3 @@
-// src/pages/LogsPage.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Filter, Download } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -193,10 +191,8 @@ const useFetchData = (fetchFunction, initialFilters) => {
 
 const LogsPage = () => {
   const initialLogFilters = {
-    startDate: "", // DIUBAH: hanya tanggal
+    startDate: "",
     endDate: "",
-    // userId: "",       // DIHAPUS
-    // action: "",       // DIHAPUS
   };
   const {
     data: paginatedLogs,
@@ -282,11 +278,9 @@ const LogsPage = () => {
                   type: "date",
                   value: logFilters.endDate,
                 },
-              ]} // DIUBAH: hanya startDate & endDate
+              ]}
               setFilters={setLogFilters}
-              onReset={
-                () => setLogFilters({ startDate: "", endDate: "" }) // DIUBAH
-              }
+              onReset={() => setLogFilters({ startDate: "", endDate: "" })}
             >
               <button
                 onClick={exportLogs}
