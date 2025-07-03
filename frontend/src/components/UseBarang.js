@@ -9,10 +9,12 @@ const useBarang = (
 ) => {
   const [barang, setBarang] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const token = localStorage.getItem("token");
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
   const fetchItems = useCallback(async () => {
     try {
@@ -22,20 +24,18 @@ const useBarang = (
       params.append("page", currentPage);
       params.append("limit", initialLimit);
 
-      if (jurusanFilter) {
-        params.append("jurusan", jurusanFilter);
-      }
-      if (statusFilter) {
-        params.append("status", statusFilter);
-      }
-      if (searchTerm) {
-        params.append("nama", searchTerm);
-      }
+      if (jurusanFilter) params.append("jurusan", jurusanFilter);
+      if (statusFilter) params.append("status", statusFilter);
+      if (searchTerm) params.append("nama", searchTerm);
 
       const url = `${baseURL}?${params.toString()}`;
       console.log("UseBarang.js: Fetch URL:", url);
 
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: {
+          ...authHeader,
+        },
+      });
       const json = await res.json();
 
       if (!res.ok) {
@@ -63,6 +63,7 @@ const useBarang = (
     jurusanFilter,
     statusFilter,
     searchTerm,
+    token, // penting untuk re-run kalau token berubah
   ]);
 
   useEffect(() => {
@@ -74,6 +75,9 @@ const useBarang = (
     try {
       const response = await fetch(`${baseURL}/${id}`, {
         method: "DELETE",
+        headers: {
+          ...authHeader,
+        },
       });
       const data = await response.json();
 
@@ -102,6 +106,7 @@ const useBarang = (
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...authHeader,
         },
         body: JSON.stringify(updatedData),
       });

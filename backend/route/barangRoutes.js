@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const barangController = require("../controllers/barangController");
 const { body, validationResult } = require("express-validator");
+const attachUser = require("../middleware/attachUser");
 
 const validateBarang = [
   body("nama").notEmpty().withMessage("Nama barang wajib diisi"),
@@ -65,6 +66,7 @@ const validateBarang = [
   },
 ];
 
+router.use(attachUser);
 router.get("/search", barangController.searchBarang);
 router.get("/", barangController.getAllBarang);
 router.post("/", validateBarang, barangController.addBarang);

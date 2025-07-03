@@ -103,13 +103,15 @@ export default function PeminjamanTable({
                         <Undo2 className="w-4 h-4" />
                       </button>
                     )}
-                  <button
-                    onClick={() => onDelete(rec._id, rec.status)} // Kirim status ke fungsi onDelete
-                    className="text-red-600 hover:text-red-900 p-1"
-                    title="Hapus"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {(userRole === "admin" || rec.status === "pending") && (
+                    <button
+                      onClick={() => onDelete(rec._id, rec.status)}
+                      className="text-red-600 hover:text-red-900 p-1"
+                      title="Hapus"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </td>
 

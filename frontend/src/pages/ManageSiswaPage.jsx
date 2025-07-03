@@ -297,13 +297,13 @@ const ManageSiswaPage = () => {
                   onClick={handleBatchEdit}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Edit Massal
+                  Edit
                 </button>
                 <button
                   onClick={handleBatchDelete}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
-                  Hapus Massal
+                  Hapus
                 </button>
               </div>
             </div>

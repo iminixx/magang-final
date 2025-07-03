@@ -41,19 +41,22 @@ export default function PeminjamanList() {
   const rejectedData = filtered.filter((r) => r.status === "rejected");
 
   const handleDelete = async (id, status) => {
-    if (status !== "pending") {
+    const isAdmin = role === "admin";
+    if (!isAdmin && status !== "pending") {
       alert("Hanya peminjaman berstatus 'pending' yang bisa dihapus.");
       return;
     }
 
-    const confirmDelete = window.confirm(
-      "Yakin ingin menghapus peminjaman ini?"
-    );
-    if (!confirmDelete) return;
+    if (!window.confirm("Yakin ingin menghapus peminjaman ini?")) return;
 
     try {
-      await fetch(`${API_LOAN}/${id}`, { method: "DELETE" });
-      await fetchData();
+      const res = await fetch(`${API_LOAN}/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Gagal menghapus peminjaman.");
+        return;
+      }
+      fetchData();
     } catch (err) {
       console.error(err);
       alert("Gagal menghapus peminjaman.");

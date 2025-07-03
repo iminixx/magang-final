@@ -71,12 +71,10 @@ const addBarang = async (req, res) => {
 
     // generate kode barang atau units di backend
     if (tipe === "habis_pakai") {
-      // generate kode utama barang
       const seqNum = await getNextSequence(keyCounter);
       const strSeq = String(seqNum).padStart(3, "000");
       req.body.kode = `${jurusan}-${abrevNama}-${strSeq}`;
     } else if (Array.isArray(units)) {
-      // generate kode untuk setiap unit tanpa kode
       const newUnits = [];
       for (let u of units) {
         if (u.kode && u.kode.trim()) {
@@ -90,14 +88,11 @@ const addBarang = async (req, res) => {
       req.body.units = newUnits;
     }
 
-    // payload dan simpan...
-    // (lajur payload sama seperti sebelumnya)
-
     const newBarang = new Barang(req.body);
     const saved = await newBarang.save({ session });
 
     await logActivity(
-      "system",
+      req.user?.id || "unknown_user",
       "Tambah Barang",
       `Menambahkan barang '${saved.nama}' (ID: ${saved._id})`
     );
@@ -162,7 +157,7 @@ const updateBarang = async (req, res) => {
     }
 
     await logActivity(
-      "system",
+      req.user?.id || "unknown_user",
       "Update Barang",
       `Mengubah barang '${updated.nama}' (ID: ${updated._id})`
     );
@@ -183,7 +178,7 @@ const deleteBarang = async (req, res) => {
     }
 
     await logActivity(
-      "system",
+      req.user?.id || "unknown_user",
       "Hapus Barang",
       `Menghapus barang '${deleted.nama}' (ID: ${deleted._id})`
     );

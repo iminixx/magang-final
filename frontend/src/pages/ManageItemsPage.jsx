@@ -30,6 +30,8 @@ const BarangManagement = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [showRusakAtauHilangOnly, setShowRusakAtauHilangOnly] = useState(false);
+  const [allBarang, setAllBarang] = useState([]);
   const [formData, setFormData] = useState({
     nama: "",
     jurusan: "",
@@ -54,6 +56,16 @@ const BarangManagement = () => {
     updateBarang,
   } = useBarang(API_BASE_URL, 10, selectedJurusan, selectedStatus, searchTerm);
 
+  const sourceList = showRusakAtauHilangOnly ? allBarang : barang;
+  const filteredBarang = showRusakAtauHilangOnly
+    ? sourceList.filter(
+        (b) =>
+          b.tipe === "tidak_habis_pakai" &&
+          Array.isArray(b.units) &&
+          b.units.some((u) => u.status === "rusak" || u.status === "hilang")
+      )
+    : sourceList;
+
   const [showDescModal, setShowDescModal] = useState(false);
   const [selectedDescBarang, setSelectedDescBarang] = useState(null);
 
@@ -62,9 +74,43 @@ const BarangManagement = () => {
     setShowDescModal(true);
   };
 
+  const fetchAllBarang = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams({
+        limit: 1000,
+        page: 1,
+        ...(selectedJurusan && { jurusan: selectedJurusan }),
+        ...(selectedStatus && { status: selectedStatus }),
+        ...(searchTerm && { nama: searchTerm }),
+      });
+      const res = await fetch(`${API_BASE_URL}?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await res.json();
+      setAllBarang(res.ok ? json.data : []);
+    } catch (err) {
+      console.error("Error fetchAllBarang:", err);
+      setAllBarang([]);
+    }
+  };
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedJurusan, selectedStatus, setCurrentPage]);
+    if (showRusakAtauHilangOnly) {
+      fetchAllBarang();
+      setCurrentPage(1);
+    }
+  }, [showRusakAtauHilangOnly, selectedJurusan, selectedStatus, searchTerm]);
+
+  const manualPageSize = 10;
+  const totalFilteredPages = Math.ceil(filteredBarang.length / manualPageSize);
+  const paginatedBarang = showRusakAtauHilangOnly
+    ? filteredBarang.slice(
+        (currentPage - 1) * manualPageSize,
+        currentPage * manualPageSize
+      )
+    : filteredBarang;
 
   const validateForm = () => {
     const newErrors = {};
@@ -108,6 +154,7 @@ const BarangManagement = () => {
   };
 
   const handleSubmit = async () => {
+    const token = localStorage.getItem("token");
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -154,6 +201,7 @@ const BarangManagement = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(basePayload),
         });
@@ -233,6 +281,7 @@ const BarangManagement = () => {
 
   const handleExport = async () => {
     try {
+      const token = localStorage.getItem("token");
       const params = new URLSearchParams({
         ...(searchTerm && { nama: searchTerm }),
         ...(selectedJurusan && { jurusan: selectedJurusan }),
@@ -241,7 +290,11 @@ const BarangManagement = () => {
         page: 1,
       });
 
-      const response = await fetch(`${API_BASE_URL}?${params.toString()}`);
+      const response = await fetch(`${API_BASE_URL}?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const dataRes = await response.json();
 
       if (response.ok) {
@@ -264,6 +317,7 @@ const BarangManagement = () => {
   };
 
   const handleImport = async (e) => {
+    const token = localStorage.getItem("token");
     const file = e.target.files[0];
     if (!file) return;
 
@@ -287,6 +341,7 @@ const BarangManagement = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ data: results.data }),
           });
@@ -428,6 +483,18 @@ const BarangManagement = () => {
                       * Status hanya berlaku untuk tipe “habis pakai”
                     </p>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={showRusakAtauHilangOnly}
+                      onChange={(e) =>
+                        setShowRusakAtauHilangOnly(e.target.checked)
+                      }
+                    />
+                    <label className="text-sm text-gray-700">
+                      Tampilkan hanya unit rusak / hilang
+                    </label>
+                  </div>
                   {hasActiveFilters && (
                     <div className="flex items-end">
                       <button
@@ -522,14 +589,17 @@ const BarangManagement = () => {
             ) : (
               <>
                 <BarangTable
-                  data={barang}
+                  data={paginatedBarang}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onInfo={onInfoClick}
                 />
+
                 <Pagination
                   currentPage={currentPage}
-                  totalPages={totalPages}
+                  totalPages={
+                    showRusakAtauHilangOnly ? totalFilteredPages : totalPages
+                  }
                   onPageChange={(page) => setCurrentPage(page)}
                 />
               </>
@@ -549,11 +619,35 @@ const BarangManagement = () => {
               Deskripsi&nbsp;
               <span className="text-blue-600">{selectedDescBarang?.nama}</span>
             </h3>
-            <p className="text-gray-700 whitespace-pre-line">
+            <p className="text-gray-700 whitespace-pre-line mb-4">
               {selectedDescBarang?.deskripsi?.trim()
                 ? selectedDescBarang.deskripsi
                 : "Belum ada deskripsi untuk barang ini."}
             </p>
+
+            {selectedDescBarang?.tipe === "tidak_habis_pakai" &&
+              selectedDescBarang.units?.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-md font-semibold mb-2">Unit Barang:</h4>
+                  <ul className="space-y-1 text-sm">
+                    {selectedDescBarang.units.map((unit, idx) => (
+                      <li
+                        key={idx}
+                        className={`flex justify-between px-3 py-2 rounded-lg ${
+                          unit.status === "rusak"
+                            ? "bg-red-100 text-red-800"
+                            : unit.status === "hilang"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        <span>Kode: {unit.kode}</span>
+                        <span>Status: {unit.status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
             <div className="mt-6 text-right">
               <button
