@@ -159,12 +159,12 @@ export default function PeminjamanLainnyaPage() {
               <ul className="inline-flex space-x-2">
                 <li>
                   <a href="/" className="hover:text-gray-900 duration-200">
-                    Home
+                    Beranda
                   </a>
                   <span className="mx-1">/</span>
                 </li>
                 <li className="text-gray-800 font-semibold">
-                  Manage Peminjaman
+                  Kelola Peminjaman
                 </li>
               </ul>
             </nav>
@@ -373,7 +373,7 @@ export default function PeminjamanLainnyaPage() {
             <div className="flex items-center my-8">
               <div className="flex-grow border-t border-gray-300"></div>
               <span className="mx-4 text-gray-500 uppercase text-sm tracking-wider">
-                Consumable
+                Barang Habis Pakai
               </span>
               <div className="flex-grow border-t border-gray-300"></div>
             </div>
@@ -389,23 +389,21 @@ export default function PeminjamanLainnyaPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        {["Nama", "Jurusan", "Stok", "Tersedia", "Aksi"].map(
-                          (head) => (
-                            <th
-                              key={head}
-                              className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              {head}
-                            </th>
-                          )
-                        )}
+                        {["Nama", "Jurusan", "Stok", "Aksi"].map((head) => (
+                          <th
+                            key={head}
+                            className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            {head}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
 
                     <tbody className="bg-white divide-y divide-gray-200">
                       {pagedHabisPakai.map((b) => {
-                        const totalStok = b.stok;
-                        const tersediaCount = totalStok;
+                        const dipinjamCount = b.stok_dipinjam || 0;
+                        const tersediaCount = b.stok - dipinjamCount;
 
                         return (
                           <tr key={b._id} className="hover:bg-gray-50">
@@ -425,9 +423,6 @@ export default function PeminjamanLainnyaPage() {
                               <Badge variant="primary">
                                 {b.jurusan || "-"}
                               </Badge>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-900 text-center">
-                              {totalStok}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {tersediaCount}

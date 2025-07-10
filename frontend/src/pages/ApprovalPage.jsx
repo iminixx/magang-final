@@ -99,15 +99,15 @@ export default function AdminApproval() {
             <ul className="inline-flex space-x-2">
               <li>
                 <a href="/" className="hover:text-gray-900">
-                  Home
+                  Beranda
                 </a>
                 <span className="mx-1">/</span>
               </li>
-              <li className="text-gray-800 font-semibold">Approval</li>
+              <li className="text-gray-800 font-semibold">Persetujuan</li>
             </ul>
           </nav>
           <h1 className="text-3xl font-bold text-gray-800">
-            Approval Peminjaman
+            Persetujuan Peminjaman
           </h1>
         </div>
 
@@ -129,7 +129,7 @@ export default function AdminApproval() {
               <p className="p-6 text-gray-600">Memuat data...</p>
             ) : pagedLoans.length === 0 ? (
               <p className="text-gray-600">
-                Tidak ada permintaan peminjaman pending.
+                Tidak ada permintaan peminjaman yang diproses.
               </p>
             ) : (
               <table className="w-full text-sm text-center font-sans">

@@ -2,12 +2,8 @@ const Siswa = require("../models/Siswa");
 const csv = require("csv-parser");
 const multer = require("multer");
 const fs = require("fs");
-const path = require("path");
 
 const upload = multer({ dest: "uploads/" });
-function generatePin() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 exports.importCSV = [
   upload.single("file"),
@@ -17,13 +13,14 @@ exports.importCSV = [
       fs.createReadStream(req.file.path)
         .pipe(csv())
         .on("data", (data) => {
-          if (!data.nama || !data.jurusan || !data.kelas) return;
+          if (!data.nama || !data.jurusan || !data.kelas || !data.tanggal_lahir)
+            return;
 
           results.push({
             nama: data.nama.trim(),
-            jurusan: data.jurusan.trim(),
-            kelas: data.kelas.trim(),
-            pin: generatePin(),
+            jurusan: data.jurusan.trim().toUpperCase(),
+            kelas: data.kelas.trim().toUpperCase(),
+            pin: data.tanggal_lahir.trim(), // ganti dari generatePin()
           });
         })
         .on("end", async () => {
@@ -118,8 +115,8 @@ exports.getByJurusanKelas = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { nama, jurusan, kelas } = req.body;
-    if (!nama || !jurusan || !kelas) {
+    const { nama, jurusan, kelas, pin } = req.body; // pin diisi tanggal lahir dari input
+    if (!nama || !jurusan || !kelas || !pin) {
       return res.status(400).json({ message: "Field tidak lengkap" });
     }
 
@@ -127,7 +124,7 @@ exports.create = async (req, res) => {
       nama,
       jurusan,
       kelas,
-      pin: generatePin(),
+      pin, // ini berisi tanggal lahir format DDMMYYYY
     });
 
     await siswa.save();
@@ -141,15 +138,16 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, jurusan, kelas } = req.body;
+    const { nama, jurusan, kelas, pin } = req.body;
 
     const siswa = await Siswa.findById(id);
     if (!siswa)
       return res.status(404).json({ message: "Siswa tidak ditemukan" });
 
-    siswa.nama = nama || siswa.nama;
-    siswa.jurusan = jurusan || siswa.jurusan;
-    siswa.kelas = kelas || siswa.kelas;
+    siswa.nama = nama ? nama.trim() : siswa.nama;
+    siswa.jurusan = jurusan ? jurusan.trim().toUpperCase() : siswa.jurusan;
+    siswa.kelas = kelas ? kelas.trim().toUpperCase() : siswa.kelas;
+    if (pin) siswa.pin = pin;
 
     await siswa.save();
     res.json({ message: "Siswa diupdate", data: siswa });

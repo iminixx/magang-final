@@ -29,6 +29,7 @@ const getAllBarang = async (req, res) => {
           ...b,
           totalUnits,
           unitTersedia: tersediaCount,
+          units: b.units,
         };
       }
       return b;
@@ -61,7 +62,6 @@ const addBarang = async (req, res) => {
       status,
     } = req.body;
 
-    // buat key counter
     const abrevNama = nama
       .trim()
       .replace(/\s+/g, "-")
@@ -69,7 +69,6 @@ const addBarang = async (req, res) => {
       .slice(0, 3);
     const keyCounter = `${jurusan}-${abrevNama}`;
 
-    // generate kode barang atau units di backend
     if (tipe === "habis_pakai") {
       const seqNum = await getNextSequence(keyCounter);
       const strSeq = String(seqNum).padStart(3, "000");
@@ -257,10 +256,10 @@ const postNextKodeUnit = async (req, res) => {
   try {
     const { key, count } = req.body;
     const allocateCount = parseInt(count) || 1;
-    // Batch allocate
-    const startSeq = await getNextSequence(key); // first increment
+
+    const startSeq = await getNextSequence(key);
     let codes = [startSeq];
-    // kalau count > 1, lanjutkan
+
     for (let i = 1; i < allocateCount; i++) {
       const next = await getNextSequence(key);
       codes.push(next);
@@ -307,7 +306,6 @@ const importBarangCSV = async (req, res) => {
               status: u.status || "tersedia",
             }));
 
-          // Validasi: semua unit harus punya kode unik
           const kodeSet = new Set();
           for (const u of units) {
             if (!u.kode) {
@@ -341,6 +339,35 @@ const importBarangCSV = async (req, res) => {
   }
 };
 
+const kembalikanUnit = async (req, res) => {
+  const { kode } = req.params;
+  const { status } = req.body;
+
+  const validStatuses = ["tersedia", "rusak", "hilang"];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Status tidak valid." });
+  }
+
+  try {
+    const barang = await Barang.findOne({ "units.kode": kode });
+    if (!barang)
+      return res.status(404).json({ message: "Unit tidak ditemukan." });
+
+    const unit = barang.units.find((u) => u.kode === kode);
+    if (!unit)
+      return res
+        .status(404)
+        .json({ message: "Unit tidak ditemukan dalam barang." });
+
+    unit.status = status;
+    await barang.save();
+
+    res.json({ message: `Status unit berhasil diubah menjadi '${status}'.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Terjadi kesalahan server." });
+  }
+};
 module.exports = {
   getAllBarang,
   addBarang,
@@ -350,4 +377,5 @@ module.exports = {
   getNextKodeUnit,
   postNextKodeUnit,
   importBarangCSV,
+  kembalikanUnit,
 };

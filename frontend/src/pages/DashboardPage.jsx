@@ -153,13 +153,13 @@ export default function DashboardPage() {
                     href="/"
                     className="hover:text-gray-900 transition duration-200"
                   >
-                    Home
+                    Beranda
                   </a>
                   <span className="mx-1">/</span>
                 </li>
               </ul>
             </nav>
-            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Beranda</h1>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6 mb-8">

@@ -7,7 +7,8 @@ import JurusanFilter from "../components/JurusanFilter";
 import Pagination from "../components/Pagination";
 import Modal from "../components/Modal";
 import PeminjamanTable from "../components/PeminjamanTable";
-import { Bell } from "lucide-react";
+import FormField from "../components/FormField";
+import { Bell, Save } from "lucide-react";
 
 const API_LOAN = "http://localhost:5000/api/peminjaman";
 
@@ -122,11 +123,11 @@ export default function ReturnPage() {
             <ul className="inline-flex space-x-2">
               <li>
                 <a href="/" className="hover:text-gray-900">
-                  Home
+                  Beranda
                 </a>
                 <span className="mx-1">/</span>
               </li>
-              <li className="text-gray-800 font-semibold">Manage Peminjaman</li>
+              <li className="text-gray-800 font-semibold">Kelola Peminjaman</li>
             </ul>
           </nav>
           <h1 className="text-3xl font-bold text-gray-800">Pengembalian</h1>
@@ -151,7 +152,7 @@ export default function ReturnPage() {
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               <Bell className="w-4 h-4" />
-              {overdueCount > 0 ? `Overdue (${overdueCount})` : "Overdue"}
+              {overdueCount > 0 ? `Overdue (${overdueCount})` : "Terlambat"}
             </button>
           </div>
 
@@ -187,25 +188,36 @@ export default function ReturnPage() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title="Validasi Pengembalian"
+        size="sm" // bisa pakai "sm" atau ukuran yang sama
       >
-        <p className="mb-2">Pilih kondisi barang yang dikembalikan:</p>
-        <select
-          value={kondisiBarang}
-          onChange={(e) => setKondisiBarang(e.target.value)}
-          className="w-full border px-3 py-2 rounded mb-4"
-        >
-          <option value="">-- Pilih kondisi --</option>
-          <option value="tersedia">Baik (tersedia)</option>
-          <option value="rusak">Rusak</option>
-          <option value="hilang">Hilang</option>
-        </select>
-        <div className="text-right">
-          <button
-            onClick={handleReturn}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            Konfirmasi Pengembalian
-          </button>
+        <div className="space-y-4">
+          <FormField label="Kondisi Barang" required>
+            <select
+              value={kondisiBarang}
+              onChange={(e) => setKondisiBarang(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">-- Pilih kondisi --</option>
+              <option value="tersedia">Baik (tersedia)</option>
+              <option value="rusak">Rusak</option>
+              <option value="hilang">Hilang</option>
+            </select>
+          </FormField>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={handleReturn}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Save className="w-4 h-4" /> Konfirmasi
+            </button>
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            >
+              Batal
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

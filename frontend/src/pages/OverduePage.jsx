@@ -69,11 +69,13 @@ export default function OverduePage() {
             <ul className="inline-flex space-x-2">
               <li>
                 <a href="/" className="hover:text-gray-900">
-                  Home
+                  Beranda
                 </a>
                 <span className="mx-1">/</span>
               </li>
-              <li className="text-gray-800 font-semibold">Overdue</li>
+              <li className="text-gray-800 font-semibold">
+                Peminjaman Terlambat
+              </li>
             </ul>
           </nav>
           <h1 className="text-3xl font-bold text-gray-800">

@@ -23,25 +23,25 @@ import { useSidebar } from "./SidebarContext";
 const allMenuItems = [
   {
     icon: LayoutDashboard,
-    label: "Dashboard",
+    label: "Beranda",
     to: "/",
     roles: ["admin", "user"],
   },
   {
     icon: Package,
-    label: "Manage Items",
+    label: "Kelola Barang",
     to: "/manage-items",
     roles: ["admin"],
   },
   {
     icon: GraduationCap,
-    label: "Manage Siswa",
+    label: "Kelola Siswa",
     to: "/manage-siswa",
     roles: ["admin"],
   },
   {
     icon: ClipboardList,
-    label: "Manage Peminjaman",
+    label: "Kelola Peminjaman",
     roles: ["admin", "user"],
     subItems: [
       {
@@ -75,8 +75,13 @@ const allMenuItems = [
     label: "Laporan",
     roles: ["admin"],
     subItems: [
-      { icon: ListOrdered, label: "Logs", to: "/reports", roles: ["admin"] },
-      { icon: Clock, label: "History", to: "/history", roles: ["admin"] },
+      {
+        icon: ListOrdered,
+        label: "Log Aktivitas",
+        to: "/reports",
+        roles: ["admin"],
+      },
+      { icon: Clock, label: "Riwayat", to: "/history", roles: ["admin"] },
     ],
   },
 ];
@@ -272,7 +277,7 @@ export default function Sidebar() {
                 }
               >
                 <Bell size={20} className="mr-3" />
-                Approval
+                Persetujuan
                 {jumlahApproval > 0 && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
                     {jumlahApproval}

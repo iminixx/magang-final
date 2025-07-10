@@ -74,5 +74,6 @@ router.put("/:id", validateBarang, barangController.updateBarang);
 router.delete("/:id", barangController.deleteBarang);
 router.get("/nextKode", barangController.getNextKodeUnit);
 router.post("/import", barangController.importBarangCSV);
+router.put("/unit/:kode/kembalikan", barangController.kembalikanUnit);
 
 module.exports = router;

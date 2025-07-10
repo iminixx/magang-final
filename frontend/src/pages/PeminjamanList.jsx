@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import usePeminjaman from "../components/UsePeminjaman";
 import PeminjamanTable from "../components/PeminjamanTable";
 import SearchInput from "../components/SearchInput";
@@ -14,12 +14,15 @@ export default function PeminjamanList() {
     searchTerm,
     handleSearch,
     currentPage,
-    totalPages,
     setCurrentPage,
     fetchData,
   } = usePeminjaman(API_LOAN);
 
   const [jurusanBarang, setJurusanBarang] = useState("");
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, jurusanBarang]);
 
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
@@ -40,13 +43,19 @@ export default function PeminjamanList() {
   const approvedData = filtered.filter((r) => r.status === "approved");
   const rejectedData = filtered.filter((r) => r.status === "rejected");
 
+  const pageSize = 10;
+  const pendingTotalPages = Math.ceil(pendingData.length / pageSize);
+  const paginatedPending = pendingData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const handleDelete = async (id, status) => {
     const isAdmin = role === "admin";
     if (!isAdmin && status !== "pending") {
-      alert("Hanya peminjaman berstatus 'pending' yang bisa dihapus.");
+      alert("Hanya peminjaman berstatus 'diproses' yang bisa dihapus.");
       return;
     }
-
     if (!window.confirm("Yakin ingin menghapus peminjaman ini?")) return;
 
     try {
@@ -66,6 +75,7 @@ export default function PeminjamanList() {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <main className="p-8 flex-1 overflow-auto min-w-0">
+        {/* Header */}
         <div className="mb-6">
           <nav className="text-sm text-gray-600 mb-2">
             <ul className="inline-flex space-x-2">
@@ -74,11 +84,11 @@ export default function PeminjamanList() {
                   href="/"
                   className="hover:text-gray-900 transition duration-200"
                 >
-                  Home
+                  Beranda
                 </a>
                 <span className="mx-1">/</span>
               </li>
-              <li className="text-gray-800 font-semibold">Manage Peminjaman</li>
+              <li className="text-gray-800 font-semibold">Kelola Peminjaman</li>
             </ul>
           </nav>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -86,6 +96,7 @@ export default function PeminjamanList() {
           </h1>
         </div>
 
+        {/* Filter & Search */}
         <div className="bg-white rounded-3xl shadow-lg p-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <SearchInput
@@ -106,13 +117,14 @@ export default function PeminjamanList() {
             <p className="text-gray-600">Memuat data...</p>
           ) : (
             <>
-              {pendingData.length > 0 && (
+              {/* Pending (paginated) */}
+              {paginatedPending.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mb-2 text-yellow-600">
                     Pending
                   </h2>
                   <PeminjamanTable
-                    data={pendingData}
+                    data={paginatedPending}
                     onReturn={() => {}}
                     onDelete={handleDelete}
                     userRole={role}
@@ -120,6 +132,7 @@ export default function PeminjamanList() {
                 </>
               )}
 
+              {/* Approved (full list) */}
               {approvedData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mt-8 mb-2 text-green-600">
@@ -128,12 +141,13 @@ export default function PeminjamanList() {
                   <PeminjamanTable
                     data={approvedData}
                     onReturn={() => {}}
-                    onDelete={() => {}}
+                    onDelete={handleDelete}
                     userRole={role}
                   />
                 </>
               )}
 
+              {/* Rejected (full list) */}
               {rejectedData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mt-8 mb-2 text-red-600">
@@ -142,7 +156,7 @@ export default function PeminjamanList() {
                   <PeminjamanTable
                     data={rejectedData}
                     onReturn={() => {}}
-                    onDelete={() => {}}
+                    onDelete={handleDelete}
                     userRole={role}
                   />
                 </>
@@ -150,10 +164,11 @@ export default function PeminjamanList() {
             </>
           )}
 
+          {/* Pagination hanya untuk Pending */}
           <div className="mt-6">
             <Pagination
               currentPage={currentPage}
-              totalPages={totalPages}
+              totalPages={pendingTotalPages}
               onPageChange={setCurrentPage}
             />
           </div>

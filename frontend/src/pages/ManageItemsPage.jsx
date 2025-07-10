@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Download, Filter, Upload } from "lucide-react";
+import { Plus, Download, Filter, Upload, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Papa from "papaparse";
 
@@ -13,12 +13,13 @@ import BarangForm from "../components/barangForm";
 import BarangTable from "../components/barangTable";
 import JurusanFilter from "../components/JurusanFilter";
 import StatusFilter from "../components/StatusFilter";
+import FormField from "../components/FormField";
 
 import useBarang from "../components/UseBarang";
 import { convertToCSV, downloadCSV } from "../components/CSV";
 
 const API_BASE_URL = "http://localhost:5000/api/barang";
-const API_LOAN = "http://localhost:5000/api/peminjaman";
+const STATUS_OPTIONS = ["tersedia", "rusak", "hilang"];
 
 const BarangManagement = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,7 +31,6 @@ const BarangManagement = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [showRusakAtauHilangOnly, setShowRusakAtauHilangOnly] = useState(false);
   const [allBarang, setAllBarang] = useState([]);
   const [formData, setFormData] = useState({
     nama: "",
@@ -56,15 +56,7 @@ const BarangManagement = () => {
     updateBarang,
   } = useBarang(API_BASE_URL, 10, selectedJurusan, selectedStatus, searchTerm);
 
-  const sourceList = showRusakAtauHilangOnly ? allBarang : barang;
-  const filteredBarang = showRusakAtauHilangOnly
-    ? sourceList.filter(
-        (b) =>
-          b.tipe === "tidak_habis_pakai" &&
-          Array.isArray(b.units) &&
-          b.units.some((u) => u.status === "rusak" || u.status === "hilang")
-      )
-    : sourceList;
+  const filteredBarang = barang;
 
   const [showDescModal, setShowDescModal] = useState(false);
   const [selectedDescBarang, setSelectedDescBarang] = useState(null);
@@ -97,20 +89,95 @@ const BarangManagement = () => {
     }
   };
   useEffect(() => {
-    if (showRusakAtauHilangOnly) {
-      fetchAllBarang();
-      setCurrentPage(1);
-    }
-  }, [showRusakAtauHilangOnly, selectedJurusan, selectedStatus, searchTerm]);
+    fetchAllBarang();
+    setCurrentPage(1);
+  }, [selectedJurusan, selectedStatus, searchTerm]);
 
   const manualPageSize = 10;
   const totalFilteredPages = Math.ceil(filteredBarang.length / manualPageSize);
-  const paginatedBarang = showRusakAtauHilangOnly
-    ? filteredBarang.slice(
-        (currentPage - 1) * manualPageSize,
-        currentPage * manualPageSize
-      )
-    : filteredBarang;
+  const paginatedBarang = filteredBarang.slice(
+    (currentPage - 1) * manualPageSize,
+    currentPage * manualPageSize
+  );
+
+  const [rusakPage, setRusakPage] = useState(1);
+  const [rusakSearch, setRusakSearch] = useState("");
+  // untuk Unit Hilang
+  const [hilangPage, setHilangPage] = useState(1);
+  const [hilangSearch, setHilangSearch] = useState("");
+  const itemsPerPageUnits = 10;
+
+  const rusakUnits = allBarang.flatMap((b) =>
+    (b.units || [])
+      .filter((u) => u.status === "rusak")
+      .map((u) => ({ nama: b.nama, kode: u.kode }))
+  );
+  const hilangUnits = allBarang.flatMap((b) =>
+    (b.units || [])
+      .filter((u) => u.status === "hilang")
+      .map((u) => ({ nama: b.nama, kode: u.kode }))
+  );
+
+  const filteredRusak = rusakUnits.filter(({ nama, kode }) =>
+    `${nama} ${kode}`.toLowerCase().includes(rusakSearch.toLowerCase())
+  );
+  const filteredHilang = hilangUnits.filter(({ nama, kode }) =>
+    `${nama} ${kode}`.toLowerCase().includes(hilangSearch.toLowerCase())
+  );
+
+  const rusakTotalPages = Math.ceil(filteredRusak.length / itemsPerPageUnits);
+  const paginatedRusak = filteredRusak.slice(
+    (rusakPage - 1) * itemsPerPageUnits,
+    rusakPage * itemsPerPageUnits
+  );
+
+  const hilangTotalPages = Math.ceil(filteredHilang.length / itemsPerPageUnits);
+  const paginatedHilang = filteredHilang.slice(
+    (hilangPage - 1) * itemsPerPageUnits,
+    hilangPage * itemsPerPageUnits
+  );
+
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [modalUnitKode, setModalUnitKode] = useState(null);
+  const [modalStatus, setModalStatus] = useState("tersedia");
+
+  const openStatusModal = (kode) => {
+    setModalUnitKode(kode);
+    setModalStatus("tersedia");
+    setShowStatusModal(true);
+  };
+  const confirmKembalikanUnit = async () => {
+    console.log(" Kirim:", { kode: modalUnitKode, status: modalStatus });
+    await handleKembalikanUnit(modalUnitKode, modalStatus);
+    setShowStatusModal(false);
+    setModalUnitKode(null);
+  };
+
+  const handleKembalikanUnit = async (kode, statusBaru = "tersedia") => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/barang/unit/${kode}/kembalikan`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: statusBaru }),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Gagal mengembalikan unit.");
+        return;
+      }
+
+      alert("Unit berhasil dikembalikan.");
+      fetchItems();
+      fetchAllBarang();
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan.");
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -298,7 +365,20 @@ const BarangManagement = () => {
       const dataRes = await response.json();
 
       if (response.ok) {
-        const dataToExport = dataRes.data || [];
+        const dataToExport = (dataRes.data || []).map((b) => ({
+          nama: b.nama,
+          jurusan: b.jurusan,
+          tipe: b.tipe,
+          stok: b.stok,
+          status: b.status,
+          maxDurasiPinjam: b.maxDurasiPinjam,
+          deskripsi: b.deskripsi,
+          units: Array.isArray(b.units)
+            ? b.units.map((u) => `${u.kode}(${u.status})`).join("; ")
+            : "",
+        }));
+        console.log(dataToExport);
+
         const csvContent = convertToCSV(dataToExport);
         const filename =
           `${selectedJurusan || "data-barang"}${
@@ -306,6 +386,7 @@ const BarangManagement = () => {
           }`
             .replace(/\s+/g, "-")
             .toLowerCase() + ".csv";
+
         downloadCSV(csvContent, filename);
       } else {
         alert("Gagal mengexport data");
@@ -384,7 +465,7 @@ const BarangManagement = () => {
                     href="/"
                     className="hover:text-gray-900 transition duration-200"
                   >
-                    Home
+                    Beranda
                   </a>
                   <span className="mx-1">/</span>
                 </li>
@@ -394,7 +475,6 @@ const BarangManagement = () => {
               Manajemen Barang
             </h1>
           </div>
-
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -483,18 +563,7 @@ const BarangManagement = () => {
                       * Status hanya berlaku untuk tipe “habis pakai”
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={showRusakAtauHilangOnly}
-                      onChange={(e) =>
-                        setShowRusakAtauHilangOnly(e.target.checked)
-                      }
-                    />
-                    <label className="text-sm text-gray-700">
-                      Tampilkan hanya unit rusak / hilang
-                    </label>
-                  </div>
+
                   {hasActiveFilters && (
                     <div className="flex items-end">
                       <button
@@ -548,7 +617,6 @@ const BarangManagement = () => {
               )}
             </div>
           </div>
-
           <Modal
             isOpen={showForm}
             onClose={handleCancel} // pastikan ini men-trigger resetForm
@@ -563,7 +631,6 @@ const BarangManagement = () => {
               isEditing={!!editingId}
             />
           </Modal>
-
           <div className="bg-white rounded-3xl shadow-lg overflow-hidden mb-8">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -597,72 +664,225 @@ const BarangManagement = () => {
 
                 <Pagination
                   currentPage={currentPage}
-                  totalPages={
-                    showRusakAtauHilangOnly ? totalFilteredPages : totalPages
-                  }
+                  totalPages={totalPages}
                   onPageChange={(page) => setCurrentPage(page)}
                 />
               </>
             )}
           </div>
+          <h2 className="text-lg font-semibold text-gray-800">Barang Rusak</h2>
+          <div className="bg-white rounded-3xl shadow-lg mb-8 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <SearchInput
+                value={rusakSearch}
+                onChange={(e) => {
+                  setRusakSearch(e.target.value);
+                  setRusakPage(1);
+                }}
+                placeholder="Cari kode/nama unit rusak..."
+                className="max-w-xs"
+              />
+              <button
+                onClick={() => {
+                  const csv = Papa.unparse(filteredRusak);
+                  downloadCSV(csv, "unit-rusak.csv");
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" /> Export
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-1/3" />
+                  <col className="w-1/3" />
+                  <col className="w-1/3" />
+                </colgroup>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nama Barang
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Kode Unit
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedRusak.map(({ nama, kode }) => (
+                    <tr key={`${nama}-${kode}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm text-gray-900 text-center truncate">
+                        {nama}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 text-center truncate">
+                        {kode}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => openStatusModal(kode)}
+                          className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          Kembalikan
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                currentPage={rusakPage}
+                totalPages={rusakTotalPages}
+                onPageChange={setRusakPage}
+              />
+            </div>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-800">Barang Hilang</h2>
+          <div className="bg-white rounded-3xl shadow-lg mb-8 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <SearchInput
+                value={hilangSearch}
+                onChange={(e) => {
+                  setHilangSearch(e.target.value);
+                  setHilangPage(1);
+                }}
+                placeholder="Cari kode/nama unit hilang..."
+                className="max-w-xs"
+              />
+              <button
+                onClick={() => {
+                  const csv = Papa.unparse(filteredHilang);
+                  downloadCSV(csv, "unit-rusak.csv");
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" /> Export
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-1/3" />
+                  <col className="w-1/3" />
+                  <col className="w-1/3" />
+                </colgroup>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nama Barang
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Kode Unit
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedHilang.map(({ nama, kode }) => (
+                    <tr key={`${nama}-${kode}`} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm text-gray-900 text-center truncate">
+                        {nama}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 text-center truncate">
+                        {kode}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => openStatusModal(kode)}
+                          className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          Kembalikan
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                currentPage={hilangPage}
+                totalPages={hilangTotalPages}
+                onPageChange={setHilangPage}
+              />
+            </div>
+          </div>
         </main>
       </div>
+      <Modal
+        isOpen={showStatusModal}
+        onClose={() => setShowStatusModal(false)}
+        title="Pilih Status Baru"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <FormField label="Status Terbaru:" required>
+            <select
+              id="modal-status"
+              value={modalStatus}
+              onChange={(e) => setModalStatus(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {STATUS_OPTIONS.map((st) => (
+                <option key={st} value={st}>
+                  {st.charAt(0).toUpperCase() + st.slice(1)}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={confirmKembalikanUnit}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Save className="w-4 h-4" />
+              Simpan
+            </button>
+            <button
+              onClick={() => setShowStatusModal(false)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {sidebarOpen && (
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       )}
 
-      {showDescModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold mb-4">
-              Deskripsi&nbsp;
-              <span className="text-blue-600">{selectedDescBarang?.nama}</span>
-            </h3>
-            <p className="text-gray-700 whitespace-pre-line mb-4">
-              {selectedDescBarang?.deskripsi?.trim()
-                ? selectedDescBarang.deskripsi
-                : "Belum ada deskripsi untuk barang ini."}
-            </p>
-
-            {selectedDescBarang?.tipe === "tidak_habis_pakai" &&
-              selectedDescBarang.units?.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-md font-semibold mb-2">Unit Barang:</h4>
-                  <ul className="space-y-1 text-sm">
-                    {selectedDescBarang.units.map((unit, idx) => (
-                      <li
-                        key={idx}
-                        className={`flex justify-between px-3 py-2 rounded-lg ${
-                          unit.status === "rusak"
-                            ? "bg-red-100 text-red-800"
-                            : unit.status === "hilang"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        <span>Kode: {unit.kode}</span>
-                        <span>Status: {unit.status}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-            <div className="mt-6 text-right">
-              <button
-                onClick={() => {
-                  setShowDescModal(false);
-                  setSelectedDescBarang(null);
-                }}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showDescModal}
+        onClose={() => setShowDescModal(false)}
+        title={`Deskripsi ${selectedDescBarang?.nama}`}
+        size="md"
+      >
+        <p className="whitespace-pre-line">
+          {selectedDescBarang?.deskripsi || "—"}
+        </p>
+        {selectedDescBarang?.units && (
+          <ul className="mt-4 space-y-2 text-sm">
+            {selectedDescBarang.units.map((u, idx) => (
+              <li key={idx}>
+                {u.kode} — {u.status}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
     </div>
   );
 };

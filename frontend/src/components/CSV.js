@@ -7,6 +7,7 @@ export const convertToCSV = (data) => {
     "Status",
     "Stok Dipinjam",
     "Dibuat",
+    "Units",
   ];
 
   const rows = data.map((item) => [
@@ -17,6 +18,7 @@ export const convertToCSV = (data) => {
     item.status,
     item.stok_dipinjam || 0,
     new Date(item.createdAt).toLocaleDateString("id-ID"),
+    item.units || "",
   ]);
 
   return [headers, ...rows].map((row) => row.join(",")).join("\n");

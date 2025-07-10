@@ -1,6 +1,6 @@
 // src/pages/PeminjamanSiswaPage.jsx
 import React, { useState, useEffect } from "react";
-import PeminjamanForm from "../components/PeminjamanForm"; // untuk siswa
+import PeminjamanForm from "../components/PeminjamanForm";
 import SearchInput from "../components/SearchInput";
 import JurusanFilter from "../components/JurusanFilter";
 import Pagination from "../components/Pagination";
@@ -158,12 +158,12 @@ export default function PeminjamanSiswaPage() {
               <ul className="inline-flex space-x-2">
                 <li>
                   <a href="/" className="hover:text-gray-900 duration-200">
-                    Home
+                    Beranda
                   </a>
                   <span className="mx-1">/</span>
                 </li>
                 <li className="text-gray-800 font-semibold">
-                  Manage Peminjaman
+                  Kelola Peminjaman
                 </li>
               </ul>
             </nav>
@@ -305,7 +305,13 @@ export default function PeminjamanSiswaPage() {
                           ? b.units.length
                           : 0;
                         const dipinjamCount = b.stok_dipinjam || 0;
-                        const tersediaCount = totalUnits - dipinjamCount;
+                        const rusakOrHilangCount =
+                          b.units?.filter(
+                            (u) => u.status === "rusak" || u.status === "hilang"
+                          ).length || 0;
+
+                        const tersediaCount =
+                          totalUnits - dipinjamCount - rusakOrHilangCount;
                         return (
                           <tr key={b._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
@@ -367,7 +373,7 @@ export default function PeminjamanSiswaPage() {
             <div className="flex items-center my-8">
               <div className="flex-grow border-t border-gray-300" />
               <span className="mx-4 text-gray-500 uppercase text-sm tracking-wider">
-                Consumable
+                Barang Habis Pakai
               </span>
               <div className="flex-grow border-t border-gray-300" />
             </div>
@@ -416,9 +422,6 @@ export default function PeminjamanSiswaPage() {
                               <Badge variant="primary">
                                 {b.jurusan || "-"}
                               </Badge>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-900 text-center">
-                              {totalStok}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-900 text-center">
                               {tersediaCount}

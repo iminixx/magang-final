@@ -27,7 +27,12 @@ const ManageSiswaPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ nama: "", jurusan: "", kelas: "" });
+  const [form, setForm] = useState({
+    nama: "",
+    jurusan: "",
+    kelas: "",
+    tanggalLahir: "",
+  });
   const [errors, setErrors] = useState({});
   const [siswaList, setSiswaList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -145,14 +150,25 @@ const ManageSiswaPage = () => {
     if (!form.nama.trim()) errs.nama = "Nama wajib diisi";
     if (!form.jurusan) errs.jurusan = "Jurusan wajib dipilih";
     if (!form.kelas.trim()) errs.kelas = "Kelas wajib diisi";
+    if (!form.tanggalLahir) errs.tanggalLahir = "Tanggal lahir wajib diisi";
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
     }
     setErrors({});
     try {
-      if (editId) await updateSiswa(editId, form);
-      else await createSiswa(form);
+      const [year, month, day] = form.tanggalLahir.split("-");
+      const pin = `${day}${month}${year}`;
+      const payload = {
+        ...form,
+        jurusan: form.jurusan.trim().toUpperCase(),
+        kelas: form.kelas.trim().toUpperCase(),
+        pin,
+      };
+      delete payload.tanggalLahir;
+
+      if (editId) await updateSiswa(editId, payload);
+      else await createSiswa(payload);
       setShowForm(false);
       setEditId(null);
       setForm({ nama: "", jurusan: "", kelas: "" });
@@ -164,7 +180,22 @@ const ManageSiswaPage = () => {
   };
 
   const handleEdit = (s) => {
-    setForm({ nama: s.nama, jurusan: s.jurusan, kelas: s.kelas });
+    const pin = s.pin || "";
+    let tanggalLahir = "";
+
+    if (pin.length === 8) {
+      const day = pin.slice(0, 2);
+      const month = pin.slice(2, 4);
+      const year = pin.slice(4, 8);
+      tanggalLahir = `${year}-${month}-${day}`;
+    }
+
+    setForm({
+      nama: s.nama,
+      jurusan: s.jurusan,
+      kelas: s.kelas,
+      tanggalLahir,
+    });
     setEditId(s._id);
     setShowForm(true);
   };
@@ -186,7 +217,7 @@ const ManageSiswaPage = () => {
               <ul className="inline-flex space-x-2">
                 <li>
                   <a href="/" className="hover:text-gray-900">
-                    Home
+                    Beranda
                   </a>
                   <span className="mx-1">/</span>
                 </li>
@@ -314,7 +345,7 @@ const ManageSiswaPage = () => {
             onClose={() => {
               setShowForm(false);
               setEditId(null);
-              setForm({ nama: "", jurusan: "", kelas: "" });
+              setForm({ nama: "", jurusan: "", kelas: "", tanggalLahir: "" });
               setErrors({});
             }}
             title={editId ? "Edit Siswa" : "Tambah Siswa"}
@@ -358,6 +389,25 @@ const ManageSiswaPage = () => {
                   <p className="text-red-600 text-sm mt-1">{errors.kelas}</p>
                 )}
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Tanggal Lahir
+                </label>
+                <input
+                  type="date"
+                  className="border rounded-xl px-4 py-2 w-full"
+                  value={form.tanggalLahir}
+                  onChange={(e) =>
+                    setForm({ ...form, tanggalLahir: e.target.value })
+                  }
+                />
+                {errors.tanggalLahir && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.tanggalLahir}
+                  </p>
+                )}
+              </div>
+
               <div className="text-right">
                 <button
                   onClick={handleSubmit}

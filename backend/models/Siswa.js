@@ -20,7 +20,7 @@ const SiswaSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
-      maxlength: 6,
+      maxlength: 8,
     },
   },
   { timestamps: true }

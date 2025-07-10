@@ -11,7 +11,6 @@ export default function PeminjamanSiswaForm({
   barangList,
   initialBarang,
 }) {
-  // — STATE PEMINJAM SISWA —
   const [selectedJurusan, setSelectedJurusan] = useState("");
   const [selectedKelas, setSelectedKelas] = useState("");
   const [siswaOptions, setSiswaOptions] = useState([]);
@@ -20,15 +19,14 @@ export default function PeminjamanSiswaForm({
   const [pinError, setPinError] = useState("");
   const [peminjamPhone, setPeminjamPhone] = useState("");
 
-  // — STATE BARANG & PINJAM —
   const [selectedBarangId, setSelectedBarangId] = useState("");
   const [selectedBarangObj, setSelectedBarangObj] = useState(null);
   const [jumlah, setJumlah] = useState(1);
   const [unitOptions, setUnitOptions] = useState([]);
   const [selectedUnits, setSelectedUnits] = useState([]);
   const [keterangan, setKeterangan] = useState("");
+  const [showPin, setShowPin] = useState(false);
 
-  // Inisialisasi jika initialBarang diberikan
   useEffect(() => {
     if (!initialBarang) return;
     setSelectedBarangObj(initialBarang);
@@ -42,7 +40,6 @@ export default function PeminjamanSiswaForm({
     }
   }, [initialBarang]);
 
-  // saat ganti barang
   const handleBarangChange = (e) => {
     const id = e.target.value;
     setSelectedBarangId(id);
@@ -57,13 +54,12 @@ export default function PeminjamanSiswaForm({
     );
   };
 
-  // cari siswa di server
   const handleSiswaSearch = async (query) => {
     if (!selectedJurusan || !selectedKelas) return;
     try {
       const res = await fetchSiswa({
         jurusan: selectedJurusan,
-        kelas: selectedKelas,
+        kelas: selectedKelas.trim().toUpperCase(),
         nama: query,
       });
       setSiswaOptions(res.data.data);
@@ -72,10 +68,9 @@ export default function PeminjamanSiswaForm({
     }
   };
 
-  // cek apakah tombol Simpan boleh aktif
   const canSubmit = () => {
     if (!selectedBarangObj) return false;
-    if (!selectedSiswa || pin.trim().length !== 6) return false;
+    if (!selectedSiswa || pin.trim().length !== 8) return false;
     if (!peminjamPhone.trim()) return false;
     if (selectedBarangObj.tipe === "habis_pakai") {
       if (jumlah < 1 || jumlah > selectedBarangObj.stok) return false;
@@ -88,10 +83,9 @@ export default function PeminjamanSiswaForm({
     return true;
   };
 
-  // submit: validasi PIN dulu
   const handleSubmit = async () => {
     if (!canSubmit()) return;
-    // validasi PIN
+
     const resp = await fetch("/api/siswa/validate-pin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -104,7 +98,6 @@ export default function PeminjamanSiswaForm({
     }
     setPinError("");
 
-    // payload
     const payload = {
       barang: selectedBarangId,
       peminjamType: "siswa",
@@ -197,16 +190,25 @@ export default function PeminjamanSiswaForm({
         {selectedSiswa && (
           <div>
             <label className="block text-sm font-medium">PIN</label>
-            <input
-              type="password"
-              className="mt-1 w-full border rounded p-2"
-              value={pin}
-              onChange={(e) => {
-                setPin(e.target.value);
-                setPinError("");
-              }}
-              placeholder="6 digit"
-            />
+            <div className="relative">
+              <input
+                type={showPin ? "text" : "password"}
+                className="mt-1 w-full border rounded p-2 pr-10"
+                value={pin}
+                onChange={(e) => {
+                  setPin(e.target.value);
+                  setPinError("");
+                }}
+                placeholder="6 digit"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-600"
+              >
+                {showPin ? "Sembunyi" : "Lihat"}
+              </button>
+            </div>
             {pinError && <p className="text-red-600 text-sm">{pinError}</p>}
           </div>
         )}
@@ -219,7 +221,7 @@ export default function PeminjamanSiswaForm({
             value={peminjamPhone}
             onChange={(e) =>
               setPeminjamPhone(e.target.value.replace(/\D/g, ""))
-            } // hanya angka
+            }
             placeholder="08xxxxxxxxxx"
           />
           {!/^08\d{8,10}$/.test(peminjamPhone) && peminjamPhone.length > 0 && (

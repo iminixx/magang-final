@@ -234,7 +234,7 @@ const HistoryPage = () => {
             <ul className="inline-flex space-x-2">
               <li>
                 <a href="/" className="hover:text-gray-900 transition">
-                  Home
+                  Beranda
                 </a>
                 <span className="mx-1">/</span>
               </li>
@@ -315,9 +315,9 @@ const HistoryPage = () => {
                   value: histFilters.status,
                   options: [
                     { label: "Semua", value: "" },
-                    { label: "Pending", value: "pending" },
-                    { label: "Approved", value: "approved" },
-                    { label: "Rejected", value: "rejected" },
+                    { label: "Diproses", value: "pending" },
+                    { label: "Diterima", value: "approved" },
+                    { label: "Ditolak", value: "rejected" },
                   ],
                 },
               ].map((f) => (

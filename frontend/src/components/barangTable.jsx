@@ -67,7 +67,8 @@ const BarangTable = ({ data, onEdit, onDelete, onInfo }) => {
                 {item.tipe === "habis_pakai"
                   ? item.stok
                   : Array.isArray(item.units)
-                  ? item.units.length
+                  ? // hanya hitung unit yg tersedia
+                    item.units.filter((u) => u.status === "tersedia").length
                   : "-"}
                 {item.stok_dipinjam > 0 && (
                   <span className="text-xs text-gray-500 ml-1">
