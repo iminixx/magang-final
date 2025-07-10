@@ -21,7 +21,6 @@ const getDashboardSummary = async (req, res) => {
       ).length;
       const totalDikembalikan = loansJur.filter((l) => l.tglKembali).length;
 
-      // Hitung total rusak dan hilang dari dua tipe barang
       const barangRusakHilang = await Barang.find({ jurusan });
 
       let totalRusak = 0;

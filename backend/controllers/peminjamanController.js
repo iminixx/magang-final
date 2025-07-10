@@ -335,10 +335,8 @@ exports.returnItem = async (req, res) => {
           .json({ message: `Kondisi unit '${kode}' tidak valid` });
       }
 
-      // Simpan perubahan
       barang.units[idx].status = kondisi;
 
-      // Dapatkan status saat dipinjam
       const prevStatus =
         loan.unitStatus?.find((u) => u.kode === kode)?.statusSaatPinjam ||
         "dipinjam";
@@ -445,14 +443,12 @@ exports.getHistory = async (req, res) => {
       }
     }
 
-    // AMBIL DATA DULU
     let data = await Peminjaman.find(filter)
       .sort({ tglPinjam: -1 })
       .populate("barang", "nama")
       .populate("peminjamSiswa", "nama jurusan kelas")
       .lean();
 
-    // FILTER NAMA SETELAH POPULATE
     if (peminjamNama) {
       const regex = new RegExp(peminjamNama, "i");
       data = data.filter((item) => {

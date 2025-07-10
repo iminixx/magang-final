@@ -75,7 +75,6 @@ export default function PeminjamanList() {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <main className="p-8 flex-1 overflow-auto min-w-0">
-        {/* Header */}
         <div className="mb-6">
           <nav className="text-sm text-gray-600 mb-2">
             <ul className="inline-flex space-x-2">
@@ -96,7 +95,6 @@ export default function PeminjamanList() {
           </h1>
         </div>
 
-        {/* Filter & Search */}
         <div className="bg-white rounded-3xl shadow-lg p-6">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <SearchInput
@@ -117,7 +115,6 @@ export default function PeminjamanList() {
             <p className="text-gray-600">Memuat data...</p>
           ) : (
             <>
-              {/* Pending (paginated) */}
               {paginatedPending.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mb-2 text-yellow-600">
@@ -132,7 +129,6 @@ export default function PeminjamanList() {
                 </>
               )}
 
-              {/* Approved (full list) */}
               {approvedData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mt-8 mb-2 text-green-600">
@@ -147,7 +143,6 @@ export default function PeminjamanList() {
                 </>
               )}
 
-              {/* Rejected (full list) */}
               {rejectedData.length > 0 && (
                 <>
                   <h2 className="font-semibold text-lg mt-8 mb-2 text-red-600">
@@ -164,7 +159,6 @@ export default function PeminjamanList() {
             </>
           )}
 
-          {/* Pagination hanya untuk Pending */}
           <div className="mt-6">
             <Pagination
               currentPage={currentPage}

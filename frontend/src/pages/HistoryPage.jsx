@@ -1,4 +1,3 @@
-// src/pages/HistoryPage.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { Filter, Download } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -8,7 +7,6 @@ import { downloadCSV } from "../components/CSV";
 import JurusanFilter from "../components/JurusanFilter";
 import Badge from "../components/Badge";
 
-// HOOK: Langsung didefinisikan agar tidak error
 const useFetchData = (fetchFunction, initialFilters) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -275,7 +273,6 @@ const HistoryPage = () => {
 
           {showFiltHist && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-3xl border mb-4">
-              {/* Filter Form */}
               {[
                 {
                   key: "startDate",
@@ -361,7 +358,6 @@ const HistoryPage = () => {
                 </div>
               ))}
 
-              {/* Jurusan Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Jurusan
@@ -376,7 +372,6 @@ const HistoryPage = () => {
                 />
               </div>
 
-              {/* Reset Filter Button */}
               {activeHist > 0 && (
                 <div className="flex items-end">
                   <button
@@ -390,7 +385,6 @@ const HistoryPage = () => {
             </div>
           )}
 
-          {/* Tabel Riwayat */}
           {loadingHist ? (
             <LoadingSpinner message="Memuat data..." />
           ) : paginatedHist.length === 0 ? (

@@ -1,4 +1,3 @@
-// src/pages/PeminjamanSiswaPage.jsx
 import React, { useState, useEffect } from "react";
 import PeminjamanForm from "../components/PeminjamanForm";
 import SearchInput from "../components/SearchInput";

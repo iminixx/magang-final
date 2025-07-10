@@ -1,4 +1,3 @@
-// src/pages/PeminjamanLainnyaPage.jsx
 import React, { useState, useEffect } from "react";
 import PeminjamanLainnyaForm from "../components/PeminjamanLainnyaForm";
 import SearchInput from "../components/SearchInput";
@@ -153,7 +152,6 @@ export default function PeminjamanLainnyaPage() {
     <div className="flex">
       <div className="flex-1 flex flex-col">
         <main className="p-8 flex-1 overflow-auto">
-          {/* Breadcrumb */}
           <div className="mb-8">
             <nav className="text-sm text-gray-600 mb-2">
               <ul className="inline-flex space-x-2">
@@ -173,13 +171,11 @@ export default function PeminjamanLainnyaPage() {
             </h1>
           </div>
 
-          {/* DATA BARANG */}
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Data Barang
             </h2>
 
-            {/* Top Row: Search + Filter */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-4">
               <SearchInput
                 value={searchBarang}
@@ -274,7 +270,7 @@ export default function PeminjamanLainnyaPage() {
                 )}
               </div>
             )}
-            {/* ===== TABEL 1: Tidak Habis Pakai ===== */}
+
             <div className="mb-8">
               {pagedTidakHabisPakai.length === 0 ? (
                 <p className="text-center p-6 text-gray-500">
@@ -378,7 +374,6 @@ export default function PeminjamanLainnyaPage() {
               <div className="flex-grow border-t border-gray-300"></div>
             </div>
 
-            {/* ===== TABEL 2: Habis Pakai ===== */}
             <div>
               {pagedHabisPakai.length === 0 ? (
                 <p className="text-center p-6 text-gray-500">
@@ -459,7 +454,6 @@ export default function PeminjamanLainnyaPage() {
             </div>
           </div>
 
-          {/* ---------- MODAL FORM PINJAM ---------- */}
           <PeminjamanLainnyaForm
             isOpen={showForm}
             onClose={() => {

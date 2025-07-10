@@ -1,4 +1,3 @@
-// Layout.jsx
 import React from "react";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
 import Sidebar from "./Sidebar";

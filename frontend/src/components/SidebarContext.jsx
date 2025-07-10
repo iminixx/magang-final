@@ -1,4 +1,3 @@
-// SidebarContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 
 const SidebarContext = createContext();
@@ -10,12 +9,10 @@ export function useSidebar() {
 }
 
 export function SidebarProvider({ children }) {
-  // buka/tutup sidebar (khusus mobile < lg)
   const [isOpen, setIsOpen] = useState(false);
-  // submenu yang sedang terbuka, format: label string atau null
+
   const [openSubmenu, setOpenSubmenu] = useState(null);
 
-  // tutup otomatis saat lebar ≥ 1024
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setIsOpen(false);

@@ -1,4 +1,3 @@
-// src/pages/ReturnPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import usePeminjaman from "../components/UsePeminjaman";
@@ -29,7 +28,6 @@ export default function ReturnPage() {
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
-  // Filter hanya yang approved dan masih pinjam
   const filtered = data
     .filter(
       (item) => item.status === "approved" && item.rentalStatus === "pinjam"
@@ -46,7 +44,6 @@ export default function ReturnPage() {
       );
     });
 
-  // Pagination berbasis filtered result
   const ITEMS_PER_PAGE = 10;
   const totalFilteredPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedData = filtered.slice(
@@ -54,7 +51,6 @@ export default function ReturnPage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Hitung overdue
   const today = new Date();
   const overdueCount = data.filter((item) => {
     if (

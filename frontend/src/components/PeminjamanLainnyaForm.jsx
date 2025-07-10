@@ -13,7 +13,6 @@ export default function PeminjamanLainnyaForm({
   const [asal, setAsal] = useState("");
   const [peminjamPhone, setPeminjamPhone] = useState("");
 
-  // same barang/amount logic as siswa form
   const [selectedBarangId, setSelectedBarangId] = useState("");
   const [selectedBarangObj, setSelectedBarangObj] = useState(null);
   const [jumlah, setJumlah] = useState(1);

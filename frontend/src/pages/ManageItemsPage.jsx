@@ -102,7 +102,7 @@ const BarangManagement = () => {
 
   const [rusakPage, setRusakPage] = useState(1);
   const [rusakSearch, setRusakSearch] = useState("");
-  // untuk Unit Hilang
+
   const [hilangPage, setHilangPage] = useState(1);
   const [hilangSearch, setHilangSearch] = useState("");
   const itemsPerPageUnits = 10;
@@ -257,7 +257,6 @@ const BarangManagement = () => {
           basePayload.stok = formData.stok;
           basePayload.status = formData.status;
         } else {
-          // Kirim units apa adanya, backend yang handle generate kode kosong
           basePayload.units = formData.units.map((u) => ({
             kode: u.kode.trim(),
             status: u.status,

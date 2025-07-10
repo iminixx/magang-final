@@ -41,7 +41,6 @@ const ManageSiswaPage = () => {
   const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
   const itemsPerPage = 10;
 
-  // Fetch once
   const fetchAll = async () => {
     setLoading(true);
     try {
@@ -83,7 +82,6 @@ const ManageSiswaPage = () => {
     }
   };
 
-  // Client-side filtering
   const filteredList = siswaList.filter((s) => {
     return (
       (searchTerm === "" ||
@@ -94,7 +92,6 @@ const ManageSiswaPage = () => {
     );
   });
 
-  // Pagination
   const totalPages = Math.ceil(filteredList.length / itemsPerPage);
   const paginated = filteredList.slice(
     (currentPage - 1) * itemsPerPage,
@@ -144,7 +141,7 @@ const ManageSiswaPage = () => {
       console.error("Gagal update massal:", err);
     }
   };
-  // Form handlers
+
   const handleSubmit = async () => {
     const errs = {};
     if (!form.nama.trim()) errs.nama = "Nama wajib diisi";
@@ -172,7 +169,7 @@ const ManageSiswaPage = () => {
       setShowForm(false);
       setEditId(null);
       setForm({ nama: "", jurusan: "", kelas: "" });
-      // refresh list
+
       await fetchAll();
     } catch (err) {
       console.error(err);
@@ -442,12 +439,10 @@ const ManageSiswaPage = () => {
                             checked={selectAllAcrossPages}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                // pilih semua item yang sudah difilter, di semua halaman
                                 const allIds = filteredList.map((s) => s._id);
                                 setSelectedIds(allIds);
                                 setSelectAllAcrossPages(true);
                               } else {
-                                // unselect all
                                 setSelectedIds([]);
                                 setSelectAllAcrossPages(false);
                               }

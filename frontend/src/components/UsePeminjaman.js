@@ -1,4 +1,3 @@
-// src/components/usePeminjaman.js
 import { useState, useEffect } from "react";
 
 export default function usePeminjaman(baseUrl) {
@@ -17,9 +16,7 @@ export default function usePeminjaman(baseUrl) {
         `${baseUrl}?page=${currentPage}&limit=${itemsPerPage}`
       );
       const result = await res.json();
-      // Kita asumsikan API mengembalikan bentuk:
-      // { data: [ ... ], total, totalPages, currentPage }
-      // dan setiap item sudah di-populate field barang & peminjamSiswa
+
       setData(result.data || []);
       setTotalPages(result.totalPages || 1);
     } catch (err) {
@@ -32,7 +29,6 @@ export default function usePeminjaman(baseUrl) {
     fetchData();
   }, [currentPage]);
 
-  // fungsi untuk meng‐set searchTerm dari komponen
   const handleSearch = (term) => {
     setSearchTerm(term);
     setCurrentPage(1);

@@ -1,4 +1,3 @@
-// src/api/reportApi.js
 import api from "../utils/api";
 
 export const fetchLogs = async (filters = {}) => {
