@@ -298,13 +298,10 @@ const importBarangCSV = async (req, res) => {
 
         let units;
         try {
-          units = item.units
-            .split(";")
-            .map((u) => JSON.parse(u.trim()))
-            .map((u) => ({
-              kode: u.kode?.trim(),
-              status: u.status || "tersedia",
-            }));
+          units = item.units.map((u) => ({
+            kode: u.kode?.trim(),
+            status: u.status || "tersedia",
+          }));
 
           const kodeSet = new Set();
           for (const u of units) {

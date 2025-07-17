@@ -5,38 +5,44 @@ const fs = require("fs");
 
 const upload = multer({ dest: "uploads/" });
 
-exports.importCSV = [
-  upload.single("file"),
-  async (req, res) => {
-    const results = [];
-    try {
-      fs.createReadStream(req.file.path)
-        .pipe(csv())
-        .on("data", (data) => {
-          if (!data.nama || !data.jurusan || !data.kelas || !data.tanggal_lahir)
-            return;
+exports.importSiswa = async (req, res) => {
+  try {
+    let dataArray = [];
 
-          results.push({
-            nama: data.nama.trim(),
-            jurusan: data.jurusan.trim().toUpperCase(),
-            kelas: data.kelas.trim().toUpperCase(),
-            pin: data.tanggal_lahir.trim(), // ganti dari generatePin()
-          });
-        })
-        .on("end", async () => {
-          await Siswa.insertMany(results);
-          fs.unlinkSync(req.file.path);
-          res.json({
-            message: "Data siswa berhasil diimpor",
-            count: results.length,
-          });
-        });
-    } catch (err) {
-      console.error("Import CSV error:", err);
-      res.status(500).json({ message: "Gagal mengimpor CSV" });
+    if (req.file) {
+      return res
+        .status(400)
+        .json({ message: "CSV import belum di-support di endpoint ini." });
+    } else if (Array.isArray(req.body.data)) {
+      dataArray = req.body.data;
+    } else {
+      return res.status(400).json({ message: "Data import tidak ditemukan" });
     }
-  },
-];
+
+    const toInsert = dataArray.map((item) => {
+      if (!item.nama || !item.jurusan || !item.kelas || !item.pin) {
+        throw new Error(`Field wajib kosong di item: ${JSON.stringify(item)}`);
+      }
+      return {
+        nama: String(item.nama).trim(),
+        jurusan: String(item.jurusan).trim().toUpperCase(),
+        kelas: String(item.kelas).trim().toUpperCase(),
+        pin: String(item.pin).trim(),
+      };
+    });
+
+    const inserted = await Siswa.insertMany(toInsert);
+    return res.json({
+      message: `Import berhasil: ${inserted.length} data ditambahkan`,
+      count: inserted.length,
+    });
+  } catch (err) {
+    console.error("Import error:", err);
+    return res
+      .status(500)
+      .json({ message: err.message || "Gagal mengimpor data" });
+  }
+};
 
 exports.batchDelete = async (req, res) => {
   try {
@@ -115,7 +121,7 @@ exports.getByJurusanKelas = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { nama, jurusan, kelas, pin } = req.body; // pin diisi tanggal lahir dari input
+    const { nama, jurusan, kelas, pin } = req.body;
     if (!nama || !jurusan || !kelas || !pin) {
       return res.status(400).json({ message: "Field tidak lengkap" });
     }
@@ -124,7 +130,7 @@ exports.create = async (req, res) => {
       nama,
       jurusan,
       kelas,
-      pin, // ini berisi tanggal lahir format DDMMYYYY
+      pin,
     });
 
     await siswa.save();

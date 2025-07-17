@@ -8,6 +8,7 @@ export default function PeminjamanTable({
   onDelete,
   userRole,
   showReturnButton = false,
+  showDeleteButton = true,
 }) {
   const [showExtra, setShowExtra] = useState(false);
 
@@ -22,6 +23,12 @@ export default function PeminjamanTable({
       default:
         return "default";
     }
+  };
+
+  const statusLabels = {
+    pending: "Diproses",
+    approved: "Disetujui",
+    rejected: "Ditolak",
   };
 
   const baseHeads = [
@@ -97,21 +104,21 @@ export default function PeminjamanTable({
                     rec.rentalStatus === "pinjam" && (
                       <button
                         onClick={() => onReturn(rec._id)}
-                        className="text-green-600 hover:text-green-900 p-1"
-                        title="Kembalikan"
+                        className="px-2 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
-                        <Undo2 className="w-4 h-4" />
+                        Validasi
                       </button>
                     )}
-                  {(userRole === "admin" || rec.status === "pending") && (
-                    <button
-                      onClick={() => onDelete(rec._id, rec.status)}
-                      className="text-red-600 hover:text-red-900 p-1"
-                      title="Hapus"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  {showDeleteButton &&
+                    (userRole === "admin" || rec.status === "pending") && (
+                      <button
+                        onClick={() => onDelete(rec._id, rec.status)}
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Hapus"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                 </div>
               </td>
 
@@ -151,7 +158,7 @@ export default function PeminjamanTable({
 
               <td className="px-6 py-4 text-center capitalize">
                 <Badge variant={getStatusVariant(rec.status)}>
-                  {rec.status}
+                  {statusLabels[rec.status] || rec.status}
                 </Badge>
               </td>
 

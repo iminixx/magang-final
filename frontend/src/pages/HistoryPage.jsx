@@ -65,6 +65,11 @@ const getStatusVariant = (status) => {
   }
 };
 
+const statusLabels = {
+  pending: "Diproses",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+};
 const HistoryPage = () => {
   const initialHistFilters = {
     startDate: "",
@@ -162,9 +167,10 @@ const HistoryPage = () => {
     {
       key: "status",
       label: "Status",
-      render: (h) => (
-        <Badge variant={getStatusVariant(h.status)}>{h.status}</Badge>
-      ),
+      render: (h) => {
+        const label = statusLabels[h.status] || h.status;
+        return <Badge variant={getStatusVariant(h.status)}>{label}</Badge>;
+      },
     },
     {
       key: "tglKembali",

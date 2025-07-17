@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Edit2, Filter, Upload } from "lucide-react";
+import { Plus, Trash2, Edit2, Filter, Upload, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import * as XLSX from "xlsx";
 
 import Sidebar from "../components/Sidebar";
 import SearchInput from "../components/SearchInput";
@@ -41,6 +43,8 @@ const ManageSiswaPage = () => {
   const [selectAllAcrossPages, setSelectAllAcrossPages] = useState(false);
   const itemsPerPage = 10;
 
+  const [showImportModal, setShowImportModal] = useState(false);
+
   const fetchAll = async () => {
     setLoading(true);
     try {
@@ -62,26 +66,53 @@ const ManageSiswaPage = () => {
 
   const fileInputRef = useRef(null);
 
-  const handleCsvUpload = async (e) => {
+  const handleXlsxUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const data = evt.target.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+      const firstSheet = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheet];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-    const formData = new FormData();
-    formData.append("file", file);
+      try {
+        const response = await fetch("http://localhost:5000/api/siswa/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: jsonData }),
+        });
+        const result = await response.json();
 
-    try {
-      await fetch("http://localhost:5000/api/siswa/import", {
-        method: "POST",
-        body: formData,
-      });
-      await fetchAll();
-      alert("Berhasil mengimpor data siswa!");
-    } catch (err) {
-      console.error("Upload CSV gagal:", err);
-      alert("Gagal mengimpor file CSV");
-    }
+        if (!response.ok) {
+          alert(result.message || "Gagal mengimpor data siswa");
+          return;
+        }
+
+        await fetchAll();
+        alert("Berhasil mengimpor data siswa!");
+      } catch (err) {
+        console.error("Upload XLSX gagal:", err);
+        alert("Gagal mengimpor file XLSX");
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null;
   };
 
+  const handleExportXlsx = () => {
+    const dataToExport = filteredList.map((s) => ({
+      nama: s.nama,
+      jurusan: s.jurusan,
+      kelas: s.kelas,
+      pin: s.pin,
+    }));
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "DataSiswa");
+    XLSX.writeFile(wb, "data-siswa.xlsx");
+  };
   const filteredList = siswaList.filter((s) => {
     return (
       (searchTerm === "" ||
@@ -254,19 +285,11 @@ const ManageSiswaPage = () => {
                 </button>
 
                 <button
-                  onClick={() => fileInputRef.current.click()}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors cursor-pointer"
+                  onClick={() => setShowImportModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                 >
-                  <Upload className="w-4 h-4" /> Import CSV
+                  <Upload className="w-4 h-4" /> Import/Export
                 </button>
-
-                <input
-                  type="file"
-                  accept=".csv"
-                  ref={fileInputRef}
-                  onChange={handleCsvUpload}
-                  className="hidden"
-                />
 
                 <button
                   onClick={() => setShowForm(true)}
@@ -530,6 +553,47 @@ const ManageSiswaPage = () => {
             )}
           </div>
         </main>
+        <Modal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          title="Import / Export Siswa"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <label
+              htmlFor="importFile"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              Import XLSX
+            </label>
+            <input
+              id="importFile"
+              type="file"
+              accept=".xlsx"
+              ref={fileInputRef}
+              onChange={handleXlsxUpload}
+              hidden
+            />
+
+            <button
+              onClick={handleExportXlsx}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export XLSX
+            </button>
+
+            <a
+              href="/assets/template-siswa.xlsx"
+              download="template-siswa.xlsx"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download Template
+            </a>
+          </div>
+        </Modal>
       </div>
     </div>
   );

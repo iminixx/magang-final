@@ -166,6 +166,7 @@ export default function ReturnPage() {
                 onDelete={() => {}}
                 userRole="admin"
                 showReturnButton={true}
+                showDeleteButton={false}
               />
             )}
           </div>

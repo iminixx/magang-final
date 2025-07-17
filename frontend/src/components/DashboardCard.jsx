@@ -1,14 +1,5 @@
-// src/components/DashboardCard.jsx
-
 import React from "react";
 
-/**
- * Props:
- *  - title:        string, judul kartu (contoh: "Rekayasa Perangkat Lunak")
- *  - data:         object, berisi field statistik:
- *                    { totalBarang, totalDipinjam, totalDikembalikan, totalRusak, totalHilang, totalTransaksi }
- *  - jurusan:      string, satu dari ["RPL","TKJ","DKV"] (untuk memberi warna dan label kecil)
- */
 const DashboardCard = ({ title, data, jurusan }) => {
   const colorMap = {
     RPL: ["border-blue-500 bg-blue-50", "text-blue-600"],

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Download, Filter, Upload, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 import Sidebar from "../components/Sidebar";
 import SearchInput from "../components/SearchInput";
@@ -16,7 +16,6 @@ import StatusFilter from "../components/StatusFilter";
 import FormField from "../components/FormField";
 
 import useBarang from "../components/UseBarang";
-import { convertToCSV, downloadCSV } from "../components/CSV";
 
 const API_BASE_URL = "http://localhost:5000/api/barang";
 const STATUS_OPTIONS = ["tersedia", "rusak", "hilang"];
@@ -60,6 +59,8 @@ const BarangManagement = () => {
 
   const [showDescModal, setShowDescModal] = useState(false);
   const [selectedDescBarang, setSelectedDescBarang] = useState(null);
+  const [showAksiModal, setShowAksiModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const onInfoClick = (item) => {
     setSelectedDescBarang(item);
@@ -92,13 +93,6 @@ const BarangManagement = () => {
     fetchAllBarang();
     setCurrentPage(1);
   }, [selectedJurusan, selectedStatus, searchTerm]);
-
-  const manualPageSize = 10;
-  const totalFilteredPages = Math.ceil(filteredBarang.length / manualPageSize);
-  const paginatedBarang = filteredBarang.slice(
-    (currentPage - 1) * manualPageSize,
-    currentPage * manualPageSize
-  );
 
   const [rusakPage, setRusakPage] = useState(1);
   const [rusakSearch, setRusakSearch] = useState("");
@@ -357,36 +351,39 @@ const BarangManagement = () => {
       });
 
       const response = await fetch(`${API_BASE_URL}?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
+
       const dataRes = await response.json();
 
       if (response.ok) {
         const dataToExport = (dataRes.data || []).map((b) => ({
-          nama: b.nama,
-          jurusan: b.jurusan,
-          tipe: b.tipe,
-          stok: b.stok,
-          status: b.status,
-          maxDurasiPinjam: b.maxDurasiPinjam,
-          deskripsi: b.deskripsi,
-          units: Array.isArray(b.units)
-            ? b.units.map((u) => `${u.kode}(${u.status})`).join("; ")
-            : "",
+          nama: b.nama || "",
+          jurusan: b.jurusan || "",
+          tipe: b.tipe || "",
+          stok: b.tipe === "habis_pakai" ? b.stok || 0 : "",
+          status: b.tipe === "habis_pakai" ? b.status || "" : "",
+          maxDurasiPinjam:
+            b.tipe === "tidak_habis_pakai" ? b.maxDurasiPinjam || "" : "",
+          deskripsi: b.deskripsi || "",
+          units:
+            b.tipe === "tidak_habis_pakai" && Array.isArray(b.units)
+              ? b.units.map((u) => `${u.kode}(${u.status})`).join("; ")
+              : "",
         }));
-        console.log(dataToExport);
 
-        const csvContent = convertToCSV(dataToExport);
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "DataBarang");
+
         const filename =
           `${selectedJurusan || "data-barang"}${
             selectedStatus ? `-${selectedStatus}` : ""
           }`
             .replace(/\s+/g, "-")
-            .toLowerCase() + ".csv";
+            .toLowerCase() + ".xlsx";
 
-        downloadCSV(csvContent, filename);
+        XLSX.writeFile(workbook, filename);
       } else {
         alert("Gagal mengexport data");
       }
@@ -401,45 +398,62 @@ const BarangManagement = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          results.data = results.data.map((row) => {
-            if (row.tipe === "tidak_habis_pakai" && row.units) {
-              row.units = row.units
-                .split(";")
-                .map((u) => u.trim())
-                .filter(Boolean)
-                .join(";");
-            }
-            return row;
-          });
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const data = evt.target.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+      const firstSheet = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheet];
+      let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-          const response = await fetch(`${API_BASE_URL}/import`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ data: results.data }),
-          });
+      try {
+        jsonData = jsonData.map((row) => {
+          if (
+            row.tipe === "tidak_habis_pakai" &&
+            typeof row.units === "string"
+          ) {
+            const parsedUnits = row.units
+              .split(";")
+              .map((unitStr) => {
+                const match = unitStr.trim().match(/^(.+)\((.+)\)$/);
+                if (!match) return null;
+                return { kode: match[1], status: match[2] };
+              })
+              .filter(Boolean);
 
-          const res = await response.json();
-
-          if (response.ok) {
-            alert("Data berhasil diimport");
-            fetchItems(); // refresh table
-          } else {
-            alert(res.message || "Gagal mengimpor data");
+            row.units = parsedUnits;
           }
-        } catch (err) {
-          console.error(err);
-          alert("Terjadi kesalahan saat import");
+
+          if (row.tipe === "habis_pakai") {
+            row.units = [];
+          }
+
+          return row;
+        });
+
+        const response = await fetch(`${API_BASE_URL}/import`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ data: jsonData }),
+        });
+
+        const res = await response.json();
+
+        if (response.ok) {
+          alert("Data berhasil diimport");
+          fetchItems();
+        } else {
+          alert(res.message || "Gagal mengimpor data");
         }
-      },
-    });
+      } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan saat import");
+      }
+    };
+    reader.readAsBinaryString(file);
     e.target.value = null;
   };
 
@@ -503,27 +517,11 @@ const BarangManagement = () => {
                     )}
                   </button>
 
-                  <input
-                    type="file"
-                    accept=".csv"
-                    id="importFile"
-                    onChange={handleImport}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="importFile"
-                    className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors cursor-pointer"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Import CSV
-                  </label>
-
                   <button
-                    onClick={handleExport}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                   >
-                    <Download className="w-4 h-4" />
-                    Export CSV
+                    Import/Export
                   </button>
                   <button
                     onClick={() => setShowForm(true)}
@@ -655,7 +653,7 @@ const BarangManagement = () => {
             ) : (
               <>
                 <BarangTable
-                  data={paginatedBarang}
+                  data={barang}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onInfo={onInfoClick}
@@ -683,12 +681,19 @@ const BarangManagement = () => {
               />
               <button
                 onClick={() => {
-                  const csv = Papa.unparse(filteredRusak);
-                  downloadCSV(csv, "unit-rusak.csv");
+                  const dataToExport = filteredRusak.map((u) => ({
+                    nama: u.nama,
+                    kode: u.kode,
+                  }));
+                  const ws = XLSX.utils.json_to_sheet(dataToExport);
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, "UnitRusak");
+                  XLSX.writeFile(wb, "unit-rusak.xlsx");
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                <Download className="w-4 h-4" /> Export
+                <Download className="w-4 h-4" />
+                Export XLSX
               </button>
             </div>
 
@@ -757,12 +762,19 @@ const BarangManagement = () => {
               />
               <button
                 onClick={() => {
-                  const csv = Papa.unparse(filteredHilang);
-                  downloadCSV(csv, "unit-rusak.csv");
+                  const dataToExport = filteredHilang.map((u) => ({
+                    nama: u.nama,
+                    kode: u.kode,
+                  }));
+                  const ws = XLSX.utils.json_to_sheet(dataToExport);
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, "UnitHilang");
+                  XLSX.writeFile(wb, "unit-hilang.xlsx");
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                <Download className="w-4 h-4" /> Export
+                <Download className="w-4 h-4" />
+                Export XLSX
               </button>
             </div>
 
@@ -819,6 +831,46 @@ const BarangManagement = () => {
           </div>
         </main>
       </div>
+      <Modal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        title="Import / Export Barang"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <label
+            htmlFor="importFile"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 cursor-pointer"
+          >
+            <Upload className="w-4 h-4" />
+            Import Excel
+          </label>
+          <input
+            id="importFile"
+            type="file"
+            accept=".xlsx"
+            onChange={handleImport}
+            hidden
+          />
+
+          <button
+            onClick={handleExport}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+
+          <a
+            href="/assets/template-barang.xlsx"
+            download="template-barang.xlsx"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Download Template
+          </a>
+        </div>
+      </Modal>
       <Modal
         isOpen={showStatusModal}
         onClose={() => setShowStatusModal(false)}
